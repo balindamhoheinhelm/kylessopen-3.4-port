@@ -82,6 +82,10 @@ struct gpio_event_matrix_info {
 	unsigned int *output_gpios;
 	unsigned int ninputs;
 	unsigned int noutputs;
+#if defined(CONFIG_MACH_KYLE) || defined(CONFIG_MACH_AMAZING)
+	unsigned int *wakeup_gpios;
+	unsigned int nwakeups;
+#endif
 	/* time to wait before reading inputs after driving each output */
 	ktime_t settle_time;
 	/* time to wait before scanning the keypad a second time */
@@ -120,6 +124,8 @@ struct gpio_event_input_info {
 	const struct gpio_event_direct_entry *keymap;
 	size_t keymap_size;
 };
+
+extern struct class *sec_class;
 
 /* outputs */
 extern int gpio_event_output_func(struct gpio_event_input_devs *input_devs,
@@ -167,4 +173,7 @@ uint16_t gpio_axis_4bit_gray_map(
 uint16_t gpio_axis_5bit_singletrack_map(
 			struct gpio_event_axis_info *info, uint16_t in);
 
+#if defined(CONFIG_MACH_KYLE) || defined(CONFIG_MACH_AMAZING)
+int gpio_event_get_wakeup_keys_status(void);
+#endif
 #endif

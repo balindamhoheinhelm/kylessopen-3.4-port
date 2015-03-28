@@ -1,0 +1,12 @@
+--- drivers/usb/gadget/f_mass_storage.c	2013-04-19 11:37:14.000000000 +0200
++++ drivers/usb/gadget/f_mass_storage.c	2014-08-29 08:16:34.656241000 +0200
+@@ -1115,7 +1119,8 @@
+ 							BUF_STATE_BUSY)
+ 						break;
+ 				}
+-				if (!amount_left_to_req && i == FSG_NUM_BUFFERS) {
++				if (!amount_left_to_req &&
++						i == FSG_NUM_BUFFERS) {
+ 					csw_hack_sent = 1;
+ 					send_status(common);
+ 				}

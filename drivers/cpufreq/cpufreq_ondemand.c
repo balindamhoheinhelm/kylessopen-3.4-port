@@ -990,8 +990,10 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 				    latency * LATENCY_MULTIPLIER);
 			dbs_tuners_ins.io_is_busy = should_io_be_busy();
 		}
+#ifndef CONFIG_SEC_DVFS
 		if (!cpu)
 			rc = input_register_handler(&dbs_input_handler);
+#endif
 		mutex_unlock(&dbs_mutex);
 
 		mutex_init(&this_dbs_info->timer_mutex);
@@ -1012,8 +1014,10 @@ static int cpufreq_governor_dbs(struct cpufreq_policy *policy,
 		/* If device is being removed, policy is no longer
 		 * valid. */
 		this_dbs_info->cur_policy = NULL;
+#ifndef CONFIG_SEC_DVFS
 		if (!cpu)
 			input_unregister_handler(&dbs_input_handler);
+#endif
 		mutex_unlock(&dbs_mutex);
 		if (!dbs_enable)
 			sysfs_remove_group(cpufreq_global_kobject,

@@ -32,6 +32,7 @@
 #define CLKFLAG_HWCG			0x00000020
 #define CLKFLAG_RETAIN			0x00000040
 #define CLKFLAG_NORETAIN		0x00000080
+#define CLKFLAG_SKIP_AUTO_OFF		0x00000200
 #define CLKFLAG_SKIP_HANDOFF		0x00000100
 #define CLKFLAG_MIN			0x00000400
 #define CLKFLAG_MAX			0x00000800
@@ -94,8 +95,9 @@ struct clk_ops {
 	int (*in_hwcg_mode)(struct clk *clk);
 	enum handoff (*handoff)(struct clk *clk);
 	int (*reset)(struct clk *clk, enum clk_reset_action action);
-	int (*set_rate)(struct clk *clk, unsigned long rate);
-	int (*set_max_rate)(struct clk *clk, unsigned long rate);
+	int (*set_rate)(struct clk *clk, unsigned rate);
+	int (*set_min_rate)(struct clk *clk, unsigned rate);
+	int (*set_max_rate)(struct clk *clk, unsigned rate);
 	int (*set_flags)(struct clk *clk, unsigned flags);
 	unsigned long (*get_rate)(struct clk *clk);
 	int (*list_rate)(struct clk *clk, unsigned n);
@@ -164,6 +166,7 @@ extern struct clock_init_data fsm9xxx_clock_init_data;
 extern struct clock_init_data msm7x01a_clock_init_data;
 extern struct clock_init_data msm7x27_clock_init_data;
 extern struct clock_init_data msm7x27a_clock_init_data;
+extern struct clock_init_data msm7x27a_uart_clock_init_data;
 extern struct clock_init_data msm7x30_clock_init_data;
 extern struct clock_init_data msm8960_clock_init_data;
 extern struct clock_init_data msm8x60_clock_init_data;

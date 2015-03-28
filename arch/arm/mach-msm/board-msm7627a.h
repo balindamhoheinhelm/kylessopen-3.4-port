@@ -13,6 +13,7 @@
 #ifndef __ARCH_ARM_MACH_MSM_BOARD_7627A__
 #define __ARCH_ARM_MACH_MSM_BOARD_7627A__
 
+#define WLAN_33V_CONTROL_FOR_BT_ANTENNA
 #include "pm.h"
 void __init msm7627a_init_mmc(void);
 
@@ -104,6 +105,15 @@ void __init msm7627a_bt_power_init(void);
 
 void __init msm7627a_camera_init(void);
 int lcd_camera_power_onoff(int on);
+
+#ifdef WLAN_33V_CONTROL_FOR_BT_ANTENNA
+#ifdef CONFIG_MACH_AMAZING_CDMA
+extern int wlan_enable_ldo_33v(int on);
+#else
+int wlan_setup_ldo_33v(int input_flag, int on);
+extern void bluetooth_setup_ldo_33v(int on);
+#endif
+#endif
 
 void __init msm7627a_add_io_devices(void);
 void __init qrd7627a_add_io_devices(void);

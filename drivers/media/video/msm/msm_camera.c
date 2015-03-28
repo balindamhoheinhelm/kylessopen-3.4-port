@@ -919,10 +919,10 @@ static struct msm_queue_cmd *__msm_control(struct msm_sync *sync,
 	if (list_empty_careful(&queue->list)) {
 		if (!rc) {
 			rc = -ETIMEDOUT;
-			pr_err("%s: wait_event error %d\n", __func__, rc);
+			pr_err("%s: wait_event error %d, 920\n", __func__, rc);
 			return ERR_PTR(rc);
 		} else if (rc < 0) {
-			pr_err("%s: wait_event error %d\n", __func__, rc);
+			pr_err("%s: wait_event error %d, 923\n", __func__, rc);
 			if (msm_delete_entry(&sync->event_q,
 				list_config, qcmd)) {
 				sync->ignore_qcmd = true;
@@ -1026,9 +1026,15 @@ static int msm_control(struct msm_control_device *ctrl_pmsm,
 		goto end;
 	}
 	msm_queue_drain(&ctrl_pmsm->ctrl_q, list_control);
+#ifdef CONFIG_MACH_KYLE
+	qcmd_resp = __msm_control(sync,
+				  &ctrl_pmsm->ctrl_q,
+				  qcmd, msecs_to_jiffies(5000));
+#else
 	qcmd_resp = __msm_control(sync,
 				  &ctrl_pmsm->ctrl_q,
 				  qcmd, msecs_to_jiffies(10000));
+#endif
 
 	/* ownership of qcmd will be transfered to event queue */
 	qcmd = NULL;
@@ -1134,9 +1140,12 @@ static int msm_divert_st_frame(struct msm_sync *sync,
 		buf.type = OUTPUT_TYPE_ST_R;
 	} else {
 		if (se->resptype == MSM_CAM_RESP_STEREO_OP_1) {
-			rc = msm_pmem_frame_ptov_lookup(sync, data->phy.p0_phy,
-				data->phy.p1_phy, data->phy.p2_phy, &pinfo,
+			if (data != NULL) {
+				rc = msm_pmem_frame_ptov_lookup(sync,
+				data->phy.p0_phy, data->phy.p1_phy,
+				data->phy.p2_phy, &pinfo,
 				1);  /* do clear the active flag */
+		  }
 			buf.buf_info.path = path;
 		} else if (se->resptype == MSM_CAM_RESP_STEREO_OP_2) {
 			rc = msm_pmem_frame_ptov_lookup(sync, data->phy.p0_phy,
@@ -1261,14 +1270,18 @@ static int msm_get_stats(struct msm_sync *sync, void __user *arg)
 			CDBG("%s: Change msg_id to OUTPUT_TYPE_ST_L\n",
 				__func__);
 			se.stats_event.msg_id = OUTPUT_TYPE_ST_L;
-			rc = msm_divert_st_frame(sync, data, &se,
+			if (data != NULL) {
+				rc = msm_divert_st_frame(sync, data, &se,
 				OUTPUT_TYPE_V);
+			}
 		} else if (vpe_data->type == VPE_MSG_OUTPUT_ST_R) {
 			CDBG("%s: Change msg_id to OUTPUT_TYPE_ST_R\n",
 				__func__);
 			se.stats_event.msg_id = OUTPUT_TYPE_ST_R;
-			rc = msm_divert_st_frame(sync, data, &se,
+			if (data != NULL) {
+				rc = msm_divert_st_frame(sync, data, &se,
 				OUTPUT_TYPE_V);
+			}
 		} else {
 			pr_warning("%s: invalid vpe_data->type = %d\n",
 				__func__, vpe_data->type);
@@ -3023,6 +3036,12 @@ static long msm_ioctl_control(struct file *filep, unsigned int cmd,
 	case MSM_CAM_IOCTL_GET_CAMERA_INFO:
 		rc = msm_get_camera_info(argp);
 		break;
+
+    case MSM_CAM_IOCTL_PCAM_CTRL_8BIT:
+		//sensor_rough_control(argp);
+		//rc = 0;
+			rc = pmsm->sync->sctrl.s_ext_config(argp); // for dual camera interface
+		        break;
 	default:
 		rc = msm_ioctl_common(pmsm, cmd, argp);
 		break;
@@ -3052,6 +3071,10 @@ static int __msm_release(struct msm_sync *sync)
 			sync->sctrl.s_release();
 			CDBG("%s, msm_camio_sensor_clk_off\n", __func__);
 			msm_camio_sensor_clk_off(sync->pdev);
+#ifdef CONFIG_MACH_KYLE_I
+			if(sync->sctrl.s_power)   //eunice09.kim : change power sequence 
+				sync->sctrl.s_power(false);
+#endif
 			if (sync->sfctrl.strobe_flash_release) {
 				CDBG("%s, strobe_flash_release\n", __func__);
 				sync->sfctrl.strobe_flash_release(
@@ -3434,6 +3457,7 @@ static void msm_vfe_sync(struct msm_vfe_resp *vdata,
 			msm_enqueue(&sync->pict_q, &qcmd->list_pict);
 			return;
 		}
+		break;
 
 	case VFE_MSG_OUTPUT_S:
 		if (sync->stereocam_enabled &&
@@ -3730,7 +3754,6 @@ static int __msm_open(struct msm_cam_device *pmsm, const char *const apps_id,
 {
 	int rc = 0;
 	struct msm_sync *sync = pmsm->sync;
-
 	mutex_lock(&sync->lock);
 	if (sync->apps_id && strcmp(sync->apps_id, apps_id)
 				&& (!strcmp(MSM_APPS_ID_V4L2, apps_id))) {
@@ -3753,6 +3776,11 @@ static int __msm_open(struct msm_cam_device *pmsm, const char *const apps_id,
 		if (sync->vfefn.vfe_init) {
 			sync->pp_frame_avail = 0;
 			sync->get_pic_abort = 0;
+			
+#ifdef CONFIG_MACH_KYLE_I
+			if(sync->sctrl.s_power) //eunice09.kim : change power sequence
+				sync->sctrl.s_power(true);
+#endif
 			rc = msm_camio_sensor_clk_on(sync->pdev);
 			if (rc < 0) {
 				pr_err("%s: setting sensor clocks failed: %d\n",

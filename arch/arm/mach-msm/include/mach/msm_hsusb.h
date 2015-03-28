@@ -138,6 +138,7 @@ struct msm_hsusb_gadget_platform_data {
 
 	int self_powered;
 	int is_phy_status_timer_on;
+	int (*get_usb_chg_type)(void);
 };
 
 struct msm_otg_platform_data {
@@ -189,6 +190,8 @@ struct msm_otg_platform_data {
 	int  (*chg_init)(int init);
 	int (*config_vddcx)(int high);
 	int (*init_vddcx)(int init);
+	int (*chg_connect_type)(void);
+	int (*chg_mode_check)(void);
 
 	struct pm_qos_request pm_qos_req_dma;
 };

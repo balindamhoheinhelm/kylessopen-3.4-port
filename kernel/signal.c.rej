@@ -1,0 +1,11 @@
+--- kernel/signal.c	2013-04-19 11:37:14.000000000 +0200
++++ kernel/signal.c	2014-08-29 08:16:36.320241000 +0200
+@@ -1901,7 +1900,7 @@
+ 		sig->group_stop_count = 1;
+ 		for (t = next_thread(current); t != current;
+ 		     t = next_thread(t)) {
+-			t->group_stop &= ~GROUP_STOP_SIGMASK;
++				t->group_stop &= ~GROUP_STOP_SIGMASK;
+ 			/*
+ 			 * Setting state to TASK_STOPPED for a group
+ 			 * stop is always done with the siglock held,

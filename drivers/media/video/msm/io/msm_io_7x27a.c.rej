@@ -1,0 +1,76 @@
+--- drivers/media/video/msm/msm_io_7x27a.c	2013-04-19 11:37:14.000000000 +0200
++++ drivers/media/video/msm/msm_io_7x27a.c	2014-08-29 08:20:15.300248000 +0200
+@@ -339,9 +339,13 @@
+ 		(0x1 << MIPI_PHY_D0_CONTROL2_ERR_SOT_HS_EN_SHFT);
+ 	CDBG("%s MIPI_PHY_D0_CONTROL2 val=0x%x\n", __func__, val);
+ 	msm_io_w(val, csibase + MIPI_PHY_D0_CONTROL2);
++#if defined(CONFIG_MACH_KYLE)
+ 	msm_io_w(val, csibase + MIPI_PHY_D1_CONTROL2);
++#else
++	/*msm_io_w(val, csibase + MIPI_PHY_D1_CONTROL2);
+ 	msm_io_w(val, csibase + MIPI_PHY_D2_CONTROL2);
+-	msm_io_w(val, csibase + MIPI_PHY_D3_CONTROL2);
++	msm_io_w(val, csibase + MIPI_PHY_D3_CONTROL2);*/
++#endif
+ 
+ 	val = (0x0F << MIPI_PHY_CL_CONTROL_HS_TERM_IMP_SHFT) |
+ 		(0x0 << MIPI_PHY_CL_CONTROL_LP_REC_EN_SHFT);
+@@ -382,9 +386,13 @@
+ 		(0x1 << MIPI_PHY_D0_CONTROL2_ERR_SOT_HS_EN_SHFT);
+ 	CDBG("%s MIPI_PHY_D0_CONTROL2 val=0x%x\n", __func__, val);
+ 	msm_io_w(val, csibase + MIPI_PHY_D0_CONTROL2);
++#if defined(CONFIG_MACH_KYLE)
+ 	msm_io_w(val, csibase + MIPI_PHY_D1_CONTROL2);
++#else
++	/*msm_io_w(val, csibase + MIPI_PHY_D1_CONTROL2);
+ 	msm_io_w(val, csibase + MIPI_PHY_D2_CONTROL2);
+-	msm_io_w(val, csibase + MIPI_PHY_D3_CONTROL2);
++	msm_io_w(val, csibase + MIPI_PHY_D3_CONTROL2);*/
++#endif
+ 
+ 	val = (0x0F << MIPI_PHY_CL_CONTROL_HS_TERM_IMP_SHFT) |
+ 		(0x0 << MIPI_PHY_CL_CONTROL_LP_REC_EN_SHFT);
+@@ -453,24 +476,24 @@
+ 	val = readl_relaxed(appbase + 0x00000210);
+ 	val |= 0x1;
+ 	writel_relaxed(val, appbase + 0x00000210);
+-	usleep_range(10000, 11000);
++	usleep_range(1000, 2000);
+ 
+ 	val = readl_relaxed(appbase + 0x00000210);
+ 	val &= ~0x1;
+ 	writel_relaxed(val, appbase + 0x00000210);
+-	usleep_range(10000, 11000);
++	usleep_range(1000, 2000);
+ 
+ 	/* do axi reset */
+ 	val = readl_relaxed(appbase + 0x00000208);
+ 	val |= 0x1;
+ 	writel_relaxed(val, appbase + 0x00000208);
+-	usleep_range(10000, 11000);
++	usleep_range(1000, 2000);
+ 
+ 	val = readl_relaxed(appbase + 0x00000208);
+ 	val &= ~0x1;
+ 	writel_relaxed(val, appbase + 0x00000208);
+ 	mb();
+-	usleep_range(10000, 11000);
++	usleep_range(1000, 2000);
+ 	return;
+ }
+ 
+@@ -559,9 +592,13 @@
+ 		(0x1 << MIPI_PHY_D0_CONTROL2_ERR_SOT_HS_EN_SHFT);
+ 	CDBG("%s MIPI_PHY_D0_CONTROL2 val=0x%x\n", __func__, val);
+ 	msm_io_w(val, csibase + MIPI_PHY_D0_CONTROL2);
++#if defined(CONFIG_MACH_KYLE)
+ 	msm_io_w(val, csibase + MIPI_PHY_D1_CONTROL2);
++#else
++	/*msm_io_w(val, csibase + MIPI_PHY_D1_CONTROL2);
+ 	msm_io_w(val, csibase + MIPI_PHY_D2_CONTROL2);
+-	msm_io_w(val, csibase + MIPI_PHY_D3_CONTROL2);
++	msm_io_w(val, csibase + MIPI_PHY_D3_CONTROL2);*/
++#endif
+ 
+ 
+ 	val = (0x0F << MIPI_PHY_CL_CONTROL_HS_TERM_IMP_SHFT) |

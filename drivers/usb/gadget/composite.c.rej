@@ -1,0 +1,156 @@
+--- drivers/usb/gadget/composite.c	2013-04-19 11:37:14.000000000 +0200
++++ drivers/usb/gadget/composite.c	2014-08-29 08:16:34.656241000 +0200
+@@ -252,7 +257,11 @@
+ 	c->bDescriptorType = type;
+ 	/* wTotalLength is written later */
+ 	c->bNumInterfaces = config->next_interface_id;
++#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
++	c->bConfigurationValue = get_config_number() + 1;
++#else
+ 	c->bConfigurationValue = config->bConfigurationValue;
++#endif
+ 	c->iConfiguration = config->iConfiguration;
+ 	c->bmAttributes = USB_CONFIG_ATT_ONE | config->bmAttributes;
+ 	c->bMaxPower = config->bMaxPower ? : (CONFIG_USB_GADGET_VBUS_DRAW / 2);
+@@ -271,6 +280,14 @@
+ 	list_for_each_entry(f, &config->functions, list) {
+ 		struct usb_descriptor_header **descriptors;
+ 
++#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
++		if (!is_available_function(f->name)) {
++			USB_DBG("skip f->%s\n", f->name);
++			continue;
++		} else {
++			USB_DBG("f->%s\n", f->name);
++		}
++#endif
+ 		if (speed == USB_SPEED_HIGH)
+ 			descriptors = f->hs_descriptors;
+ 		else
+@@ -281,10 +298,18 @@
+ 			(const struct usb_descriptor_header **) descriptors);
+ 		if (status < 0)
+ 			return status;
++#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
++		if (change_conf(f, next, len, config, speed) < 0) {
++			USB_DBG_ESS("failed to change configuration\n");
++			return -EINVAL;
++		}
++#endif
+ 		len -= status;
+ 		next += status;
+ 	}
+-
++#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
++	set_interface_count(config, c);
++#endif
+ 	len = next - buf;
+ 	c->wTotalLength = cpu_to_le16(len);
+ 	return len;
+@@ -311,6 +336,9 @@
+ 
+ 	/* This is a lookup by config *INDEX* */
+ 	w_value &= 0xff;
++#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
++	w_value = set_config_number(w_value);
++#endif
+ 	list_for_each_entry(c, &cdev->configs, list) {
+ 		/* ignore configs that won't work at this speed */
+ 		if (speed == USB_SPEED_HIGH) {
+@@ -350,6 +378,9 @@
+ 				continue;
+ 		}
+ 		count++;
++#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
++		count = count_multi_config(c, count);
++#endif
+ 	}
+ 	return count;
+ }
+@@ -402,7 +433,12 @@
+ 
+ 	if (number) {
+ 		list_for_each_entry(c, &cdev->configs, list) {
++#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
++			if (c->bConfigurationValue == number ||
++							check_config(number)) {
++#else
+ 			if (c->bConfigurationValue == number) {
++#endif
+ 				result = 0;
+ 				break;
+ 			}
+@@ -415,10 +451,14 @@
+ 	INFO(cdev, "%s speed config #%d: %s\n",
+ 		({ char *speed;
+ 		switch (gadget->speed) {
+-		case USB_SPEED_LOW:	speed = "low"; break;
+-		case USB_SPEED_FULL:	speed = "full"; break;
+-		case USB_SPEED_HIGH:	speed = "high"; break;
+-		default:		speed = "?"; break;
++		case USB_SPEED_LOW:
++			speed = "low"; break;
++		case USB_SPEED_FULL:
++			speed = "full"; break;
++		case USB_SPEED_HIGH:
++			speed = "high"; break;
++		default:
++			speed = "?"; break;
+ 		} ; speed; }), number, c ? c->label : "unconfigured");
+ 
+ 	if (!c)
+@@ -598,6 +638,8 @@
+ {
+ 	unsigned long flags;
+ 
++	printk(KERN_DEBUG "usb: %s cdev->config=%p, config=%p\n",
++			__func__, cdev->config, config);
+ 	spin_lock_irqsave(&cdev->lock, flags);
+ 
+ 	if (cdev->config == config)
+@@ -687,6 +729,14 @@
+ 				collect_langs(sp, s->wData);
+ 
+ 			list_for_each_entry(f, &c->functions, list) {
++#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
++				if (!is_available_function(f->name)) {
++					USB_DBG("skip f->%s\n", f->name);
++					continue;
++				} else {
++					USB_DBG("f->%s\n", f->name);
++				}
++#endif
+ 				sp = f->strings;
+ 				if (sp)
+ 					collect_langs(sp, s->wData);
+@@ -769,8 +819,12 @@
+ 		 * supported languages */
+ 		/* 255 reserved as well? -- mina86 */
+ 		cdev->next_string_id++;
++		printk(KERN_DEBUG "usb: %s cdev(0x%p)->next_string_id=%d\n",
++			__func__, cdev, cdev->next_string_id);
+ 		return cdev->next_string_id;
+ 	}
++	printk(KERN_DEBUG "usb: %s error cdev(0x%p)->next_string_id=%d\n",
++		__func__, cdev, cdev->next_string_id);
+ 	return -ENODEV;
+ }
+ 
+@@ -794,6 +848,8 @@
+ {
+ 	int next = cdev->next_string_id;
+ 
++	printk(KERN_DEBUG "usb: %s --cdev(0x%p)->next_string_id=%d\n",
++		__func__, cdev, cdev->next_string_id);
+ 	for (; str->s; ++str) {
+ 		if (unlikely(next >= 254))
+ 			return -ENODEV;
+@@ -827,6 +883,8 @@
+ int usb_string_ids_n(struct usb_composite_dev *c, unsigned n)
+ {
+ 	unsigned next = c->next_string_id;
++	printk(KERN_DEBUG "usb: %s --cdev(0x%p)->next_string_id=%d\n",
++		__func__, c, c->next_string_id);
+ 	if (unlikely(n > 254 || (unsigned)next + n > 254))
+ 		return -ENODEV;
+ 	c->next_string_id += n;

@@ -547,6 +547,7 @@ static int __init smd_tty_init(void)
 			legacy_ds |= cpu_is_msm7x01() || cpu_is_msm7x25();
 			legacy_ds |= cpu_is_msm7x27() || cpu_is_msm7x30();
 			legacy_ds |= cpu_is_qsd8x50() || cpu_is_msm8x55();
+			legacy_ds |= cpu_is_msm7x25aa() || cpu_is_msm7x27aa();
 			/*
 			 * use legacy mode for 8660 Standalone (subtype 0)
 			 */

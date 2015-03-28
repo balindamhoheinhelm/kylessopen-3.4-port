@@ -1,0 +1,11 @@
+--- drivers/power/Makefile	2013-04-19 11:37:14.000000000 +0200
++++ drivers/power/Makefile	2014-08-29 08:16:32.484241000 +0200
+@@ -49,4 +50,7 @@
+ obj-$(CONFIG_PM8XXX_CCADC)	+= pm8xxx-ccadc.o
+ obj-$(CONFIG_PM8921_BMS)	+= pm8921-bms.o
+ obj-$(CONFIG_PM8921_CHARGER)	+= pm8921-charger.o
+-obj-$(CONFIG_LTC4088_CHARGER)	+= ltc4088-charger.o
++obj-$(CONFIG_BQ27425_FUEL_GAUGE)	+= bq27425_fuelgauge.o
++obj-$(CONFIG_MAX17048_FUELGAUGE)	+= fuelgauge_max17048.o
++obj-$(CONFIG_MAX17043_FUELGAUGE)	+= fuelgauge_max17043.o
++obj-$(CONFIG_CHARGER_SMB328A)   += smb328a_charger.o

@@ -344,6 +344,11 @@ config SMB349_CHARGER
 	  SMB349 be operated as a slave device via the power supply
 	  framework.
 
+config CHARGER_SMB328A
+	bool "Enable SMB328A charger driver"
+	default n
+	help
+	  Say Y here to enable support for charger with SMB328A chip
 config BATTERY_MSM_FAKE
 	tristate "Fake MSM battery"
 	depends on ARCH_MSM && BATTERY_MSM
@@ -434,4 +439,25 @@ config AB8500_BATTERY_THERM_ON_BATCTRL
 	help
 	  Say Y to enable battery temperature measurements using
 	  thermistor connected on BATCTRL ADC.
+
+config BQ27425_FUEL_GAUGE
+	tristate "TI BQ27425 Fuel Gauge"
+	depends on I2C
+	help
+	  BQ27425 is fuel-gauge systems for lithium-ion (Li+) batteries
+	  in handheld and portable equipment.
+
+config MAX17043_FUELGAUGE
+	tristate "Maxim MAX17043 Fuel Gauge"
+	depends on I2C
+	help
+	  MAX17043 is fuel-gauge systems for lithium-ion (Li+) batteries
+	  in handheld and portable equipment "
+
+config MAX17048_FUELGAUGE
+	tristate "Maxim MAX17048 Fuel Gauge"
+	depends on I2C
+	help
+	  MAX17048 is fuel-gauge systems for lithium-ion (Li+) batteries
+	  in handheld and portable equipment "
 endif # POWER_SUPPLY

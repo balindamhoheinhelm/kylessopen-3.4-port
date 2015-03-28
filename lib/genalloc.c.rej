@@ -1,0 +1,27 @@
+--- lib/genalloc.c	2013-04-19 11:37:14.000000000 +0200
++++ lib/genalloc.c	2014-08-29 08:20:15.312248000 +0200
+@@ -124,18 +124,21 @@
+ {
+ 	struct list_head *_chunk;
+ 	struct gen_pool_chunk *chunk;
++	phys_addr_t paddr = -1;
+ 
+ 	read_lock(&pool->lock);
+ 	list_for_each(_chunk, &pool->chunks) {
+ 		chunk = list_entry(_chunk, struct gen_pool_chunk, next_chunk);
+ 
+ 		if (addr >= chunk->start &&
+-		    addr < (chunk->start + chunk->size))
+-			return chunk->phys_addr + addr - chunk->start;
++		    addr < (chunk->start + chunk->size)) {
++			paddr = chunk->phys_addr + addr - chunk->start;
++			break;
++			}
+ 	}
+ 	read_unlock(&pool->lock);
+ 
+-	return -1;
++	 return paddr;
+ }
+ EXPORT_SYMBOL(gen_pool_virt_to_phys);
+ 

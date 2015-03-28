@@ -42,7 +42,8 @@ enum {
 	IRQ_DEBUG_SLEEP = 1U << 3,
 	IRQ_DEBUG_SLEEP_REQUEST = 1U << 4,
 };
-static int msm_irq_debug_mask;
+static int msm_irq_debug_mask = IRQ_DEBUG_SLEEP_INT_TRIGGER
+					| IRQ_DEBUG_SLEEP_INT;
 module_param_named(debug_mask, msm_irq_debug_mask, int,
 		   S_IRUGO | S_IWUSR | S_IWGRP);
 

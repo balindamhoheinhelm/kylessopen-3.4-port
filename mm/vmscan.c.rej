@@ -1,0 +1,26 @@
+--- mm/vmscan.c	2013-04-19 11:37:14.000000000 +0200
++++ mm/vmscan.c	2014-08-29 08:16:36.460241000 +0200
+@@ -717,7 +717,10 @@
+ /*
+  * shrink_page_list() returns the number of reclaimed pages
+  */
+-static unsigned long shrink_page_list(struct list_head *page_list,
++#ifndef CONFIG_ZRAM_FOR_ANDROID
++static
++#endif /* CONFIG_ZRAM_FOR_ANDROID */
++unsigned long shrink_page_list(struct list_head *page_list,
+ 				      struct zone *zone,
+ 				      struct scan_control *sc)
+ {
+@@ -1211,7 +1248,10 @@
+  * clear_active_flags() is a helper for shrink_active_list(), clearing
+  * any active bits from the pages in the list.
+  */
+-static unsigned long clear_active_flags(struct list_head *page_list,
++#ifndef CONFIG_ZRAM_FOR_ANDROID
++static
++#endif /* CONFIG_ZRAM_FOR_ANDROID */
++unsigned long clear_active_flags(struct list_head *page_list,
+ 					unsigned int *count)
+ {
+ 	int nr_active = 0;

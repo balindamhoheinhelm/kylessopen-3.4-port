@@ -1,0 +1,23 @@
+--- drivers/gpu/msm/adreno.c	2013-04-19 11:37:14.000000000 +0200
++++ drivers/gpu/msm/adreno.c	2014-08-29 08:20:15.300248000 +0200
+@@ -568,13 +570,17 @@
+ 
+ 	if (cpu_is_msm8960() || cpu_is_msm8930())
+ 		adreno_regwrite(device, REG_RBBM_PM_OVERRIDE1, 0x200);
++	else if (adreno_is_a200(adreno_dev))
++		adreno_regwrite(device, REG_RBBM_PM_OVERRIDE1, 0xFDC001E0);
+ 	else
+ 		adreno_regwrite(device, REG_RBBM_PM_OVERRIDE1, 0);
+ 
+-	if (!adreno_is_a22x(adreno_dev))
+-		adreno_regwrite(device, REG_RBBM_PM_OVERRIDE2, 0);
++	if (adreno_is_a22x(adreno_dev))
++ 		adreno_regwrite(device, REG_RBBM_PM_OVERRIDE2, 0x80);
++	else if (adreno_is_a200(adreno_dev))
++	        adreno_regwrite(device, REG_RBBM_PM_OVERRIDE2, 0x38);
+ 	else
+-		adreno_regwrite(device, REG_RBBM_PM_OVERRIDE2, 0x80);
++		adreno_regwrite(device, REG_RBBM_PM_OVERRIDE2, 0x0);
+ 
+ 	kgsl_sharedmem_set(&device->memstore, 0, 0, device->memstore.size);
+ 

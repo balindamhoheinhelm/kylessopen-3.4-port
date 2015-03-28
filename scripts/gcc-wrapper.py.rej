@@ -1,0 +1,14 @@
+--- scripts/gcc-wrapper.py	2013-04-19 11:37:14.000000000 +0200
++++ scripts/gcc-wrapper.py	2014-08-29 08:20:15.312248000 +0200
+@@ -57,10 +56,9 @@
+     "msm_sdcc.c:128",
+     "nf_conntrack_netlink.c:790",
+     "nf_nat_standalone.c:118",
+-    "return_address.c:62",
++    "return_address.c:61",
+     "soc-core.c:1719",
+     "xt_log.h:50",
+-    "vx6953.c:3124",
+  ])
+ 
+ # Capture the name of the object file, can find it.

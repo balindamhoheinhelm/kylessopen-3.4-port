@@ -223,6 +223,10 @@ struct msm_snd_device_config {
 #define SND_SET_DEVICE _IOW(SND_IOCTL_MAGIC, 2, struct msm_device_config *)
 
 #define SND_METHOD_VOICE 0
+#if defined(CONFIG_MACH_KYLE_HKTW) || defined(CONFIG_MACH_KYLE_CHN) || defined(CONFIG_MACH_KYLE_I)
+#define SND_METHOD_MIDI  4
+#endif
+
 
 struct msm_snd_volume_config {
 	uint32_t device;

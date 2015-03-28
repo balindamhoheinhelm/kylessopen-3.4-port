@@ -2478,7 +2478,8 @@ static int cgroup_file_open(struct inode *inode, struct file *file)
 	if (err)
 		return err;
 	cft = __d_cft(file->f_dentry);
-
+	if (!cft)
+		return -ENODEV;
 	if (cft->read_map || cft->read_seq_string) {
 		struct cgroup_seqfile_state *state =
 			kzalloc(sizeof(*state), GFP_USER);

@@ -53,6 +53,10 @@
 #include <asm/uaccess.h>
 #include <asm/io.h>
 #include <asm/unistd.h>
+#if !defined(CONFIG_MACH_KYLE)
+#include "../drivers/dpram/dpram.h"
+#endif
+
 
 #ifndef SET_UNALIGN_CTL
 # define SET_UNALIGN_CTL(a,b)	(-EINVAL)
@@ -403,6 +407,7 @@ EXPORT_SYMBOL_GPL(kernel_halt);
  *
  *	Shutdown everything and perform a clean system power_off.
  */
+struct timer_list power_off_timer;
 void kernel_power_off(void)
 {
 	kernel_shutdown_prepare(SYSTEM_POWER_OFF);
@@ -411,6 +416,11 @@ void kernel_power_off(void)
 	disable_nonboot_cpus();
 	syscore_shutdown();
 	printk(KERN_EMERG "Power down.\n");
+
+#if (defined(CONFIG_MACH_TREBON) || defined(CONFIG_MACH_AMAZING)) && defined(CONFIG_SEC_DEBUG) && defined(CONFIG_DPRAM)
+	power_down_registertimer(&power_off_timer, POWER_DOWN_TIME);
+#endif 
+
 	kmsg_dump(KMSG_DUMP_POWEROFF);
 	machine_power_off();
 }

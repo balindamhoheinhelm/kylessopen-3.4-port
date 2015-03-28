@@ -629,9 +629,6 @@ int msm_rpcrouter_destroy_local_endpoint(struct msm_rpc_endpoint *ept)
 	/* Endpoint with dst_pid = 0xffffffff corresponds to that of
 	** router port. So don't send a REMOVE CLIENT message while
 	** destroying it.*/
-	spin_lock_irqsave(&local_endpoints_lock, flags);
-	list_del(&ept->list);
-	spin_unlock_irqrestore(&local_endpoints_lock, flags);
 	if (ept->dst_pid != 0xffffffff) {
 		msg.cmd = RPCROUTER_CTRL_CMD_REMOVE_CLIENT;
 		msg.cli.pid = ept->pid;
@@ -663,6 +660,9 @@ int msm_rpcrouter_destroy_local_endpoint(struct msm_rpc_endpoint *ept)
 
 	wake_lock_destroy(&ept->read_q_wake_lock);
 	wake_lock_destroy(&ept->reply_q_wake_lock);
+	spin_lock_irqsave(&local_endpoints_lock, flags);
+	list_del(&ept->list);
+	spin_unlock_irqrestore(&local_endpoints_lock, flags);
 	kfree(ept);
 	return 0;
 }
@@ -692,11 +692,16 @@ static int rpcrouter_create_remote_endpoint(uint32_t pid, uint32_t cid)
 static struct msm_rpc_endpoint *rpcrouter_lookup_local_endpoint(uint32_t cid)
 {
 	struct msm_rpc_endpoint *ept;
+	unsigned long flags;
 
+	spin_lock_irqsave(&local_endpoints_lock, flags);
 	list_for_each_entry(ept, &local_endpoints, list) {
-		if (ept->cid == cid)
+		if (ept->cid == cid) {
+			spin_unlock_irqrestore(&local_endpoints_lock, flags);
 			return ept;
+		}
 	}
+	spin_unlock_irqrestore(&local_endpoints_lock, flags);
 	return NULL;
 }
 
@@ -1117,10 +1122,8 @@ static void do_read_data(struct work_struct *work)
 	}
 #endif
 
-	spin_lock_irqsave(&local_endpoints_lock, flags);
 	ept = rpcrouter_lookup_local_endpoint(hdr.dst_cid);
 	if (!ept) {
-		spin_unlock_irqrestore(&local_endpoints_lock, flags);
 		DIAG("no local ept for cid %08x\n", hdr.dst_cid);
 		kfree(frag);
 		goto done;
@@ -1130,7 +1133,7 @@ static void do_read_data(struct work_struct *work)
 	 * and if so, append this fragment to that packet.
 	 */
 	mid = PACMARK_MID(pm);
-	spin_lock(&ept->incomplete_lock);
+	spin_lock_irqsave(&ept->incomplete_lock, flags);
 	list_for_each_entry(pkt, &ept->incomplete, list) {
 		if (pkt->mid == mid) {
 			pkt->last->next = frag;
@@ -1138,16 +1141,15 @@ static void do_read_data(struct work_struct *work)
 			pkt->length += frag->length;
 			if (PACMARK_LAST(pm)) {
 				list_del(&pkt->list);
-				spin_unlock(&ept->incomplete_lock);
+				spin_unlock_irqrestore(&ept->incomplete_lock,
+						       flags);
 				goto packet_complete;
 			}
-			spin_unlock(&ept->incomplete_lock);
-			spin_unlock_irqrestore(&local_endpoints_lock, flags);
+			spin_unlock_irqrestore(&ept->incomplete_lock, flags);
 			goto done;
 		}
 	}
-	spin_unlock(&ept->incomplete_lock);
-	spin_unlock_irqrestore(&local_endpoints_lock, flags);
+	spin_unlock_irqrestore(&ept->incomplete_lock, flags);
 	/* This mid is new -- create a packet for it, and put it on
 	 * the incomplete list if this fragment is not a last fragment,
 	 * otherwise put it on the read queue.
@@ -1159,31 +1161,18 @@ static void do_read_data(struct work_struct *work)
 	pkt->mid = mid;
 	pkt->length = frag->length;
 
-	spin_lock_irqsave(&local_endpoints_lock, flags);
-	ept = rpcrouter_lookup_local_endpoint(hdr.dst_cid);
-	if (!ept) {
-		spin_unlock_irqrestore(&local_endpoints_lock, flags);
-		DIAG("no local ept for cid %08x\n", hdr.dst_cid);
-		kfree(frag);
-		kfree(pkt);
-		goto done;
-	}
 	if (!PACMARK_LAST(pm)) {
-		spin_lock(&ept->incomplete_lock);
 		list_add_tail(&pkt->list, &ept->incomplete);
-		spin_unlock(&ept->incomplete_lock);
-		spin_unlock_irqrestore(&local_endpoints_lock, flags);
 		goto done;
 	}
 
 packet_complete:
-	spin_lock(&ept->read_q_lock);
+	spin_lock_irqsave(&ept->read_q_lock, flags);
 	D("%s: take read lock on ept %p\n", __func__, ept);
 	wake_lock(&ept->read_q_wake_lock);
 	list_add_tail(&pkt->list, &ept->read_q);
 	wake_up(&ept->wait_q);
-	spin_unlock(&ept->read_q_lock);
-	spin_unlock_irqrestore(&local_endpoints_lock, flags);
+	spin_unlock_irqrestore(&ept->read_q_lock, flags);
 done:
 
 	if (hdr.confirm_rx) {
@@ -1545,12 +1534,16 @@ int msm_rpc_write(struct msm_rpc_endpoint *ept, void *buffer, int count)
 	int first_pkt = 1;
 	uint32_t mid;
 	unsigned long flags;
+	long oldnice = current->static_prio - 120;
+
+	set_user_nice(current, -15);
 
 	/* snoop the RPC packet and enforce permissions */
 
 	/* has to have at least the xid and type fields */
 	if (count < (sizeof(uint32_t) * 2)) {
 		printk(KERN_ERR "rr_write: rejecting runt packet\n");
+		set_user_nice(current, oldnice);
 		return -EINVAL;
 	}
 
@@ -1559,10 +1552,12 @@ int msm_rpc_write(struct msm_rpc_endpoint *ept, void *buffer, int count)
 		if (count < (sizeof(uint32_t) * 6)) {
 			printk(KERN_ERR
 			       "rr_write: rejecting runt call packet\n");
+			set_user_nice(current, oldnice);
 			return -EINVAL;
 		}
 		if (ept->dst_pid == 0xffffffff) {
 			printk(KERN_ERR "rr_write: not connected\n");
+			set_user_nice(current, oldnice);
 			return -ENOTCONN;
 		}
 		if ((ept->dst_prog != rq->prog) ||
@@ -1574,6 +1569,7 @@ int msm_rpc_write(struct msm_rpc_endpoint *ept, void *buffer, int count)
 			       be32_to_cpu(rq->prog), be32_to_cpu(rq->vers),
 			       be32_to_cpu(ept->dst_prog),
 			       be32_to_cpu(ept->dst_vers));
+			set_user_nice(current, oldnice);
 			return -EINVAL;
 		}
 		hdr.dst_pid = ept->dst_pid;
@@ -1587,6 +1583,7 @@ int msm_rpc_write(struct msm_rpc_endpoint *ept, void *buffer, int count)
 		if (!reply) {
 			printk(KERN_ERR
 			       "rr_write: rejecting, reply not found \n");
+			set_user_nice(current, oldnice);
 			return -EINVAL;
 		}
 		hdr.dst_pid = reply->pid;
@@ -1660,6 +1657,7 @@ int msm_rpc_write(struct msm_rpc_endpoint *ept, void *buffer, int count)
 		spin_unlock_irqrestore(&ept->reply_q_lock, flags);
 	}
 
+	set_user_nice(current, oldnice);
 	return count;
 }
 EXPORT_SYMBOL(msm_rpc_write);
@@ -2529,3 +2527,4 @@ module_init(rpcrouter_init);
 MODULE_DESCRIPTION("MSM RPC Router");
 MODULE_AUTHOR("San Mehat <san@android.com>");
 MODULE_LICENSE("GPL");
+

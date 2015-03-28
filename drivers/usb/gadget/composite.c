@@ -1051,6 +1051,11 @@ int usb_string_ids_n(struct usb_composite_dev *c, unsigned n)
 	return next + 1;
 }
 
+#include "multi_config.h"
+/*
+#undef DBG
+#define DBG(dev, fmt, args...) printk(KERN_DEBUG "usb: "fmt, ##args)
+*/
 
 /*-------------------------------------------------------------------------*/
 
@@ -1121,6 +1126,7 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 
 			value = min(w_length, (u16) sizeof cdev->desc);
 			memcpy(req->buf, &cdev->desc, value);
+			printk(KERN_DEBUG "usb: GET_DES\n");
 			break;
 		case USB_DT_DEVICE_QUALIFIER:
 			if (!gadget_is_dualspeed(gadget) ||
@@ -1151,6 +1157,9 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 						USB_DT_OTG);
 			break;
 		case USB_DT_STRING:
+#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
+			set_string_mode(w_length);
+#endif
 			value = get_string(cdev, req->buf,
 					w_index, w_value & 0xff);
 			if (value >= 0)
@@ -1180,12 +1189,17 @@ composite_setup(struct usb_gadget *gadget, const struct usb_ctrlrequest *ctrl)
 		spin_lock(&cdev->lock);
 		value = set_config(cdev, ctrl, w_value);
 		spin_unlock(&cdev->lock);
+		printk(KERN_DEBUG "usb: SET_CON\n");
 		break;
 	case USB_REQ_GET_CONFIGURATION:
 		if (ctrl->bRequestType != USB_DIR_IN)
 			goto unknown;
 		if (cdev->config)
+#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
+			*(u8 *)req->buf = get_config_number() + 1;
+#else
 			*(u8 *)req->buf = cdev->config->bConfigurationValue;
+#endif
 		else
 			*(u8 *)req->buf = 0;
 		value = min(w_length, (u16) 1);
@@ -1356,9 +1370,13 @@ static void composite_disconnect(struct usb_gadget *gadget)
 	struct usb_composite_dev	*cdev = get_gadget_data(gadget);
 	unsigned long			flags;
 
+#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
+	set_string_mode(0);
+#endif
 	/* REVISIT:  should we have config and device level
 	 * disconnect callbacks?
 	 */
+	printk(KERN_DEBUG "usb: %s\n", __func__);
 	spin_lock_irqsave(&cdev->lock, flags);
 	if (cdev->config)
 		reset_config(cdev);
@@ -1485,6 +1503,10 @@ static int composite_bind(struct usb_gadget *gadget)
 	if (bcdDevice)
 		cdev->desc.bcdDevice = cpu_to_le16(bcdDevice);
 
+	printk(KERN_DEBUG "usb: %s idVendor=0x%x, idProduct=0x%x\n",
+			__func__, idVendor, idProduct);
+	printk(KERN_DEBUG "usb: %s bcdDevice=0x%x\n", __func__, bcdDevice);
+
 	/* string overrides */
 	if (iManufacturer || !cdev->desc.iManufacturer) {
 		if (!iManufacturer && !composite->iManufacturer &&
@@ -1499,6 +1521,9 @@ static int composite_bind(struct usb_gadget *gadget)
 		cdev->manufacturer_override =
 			override_id(cdev, &cdev->desc.iManufacturer);
 	}
+
+	printk(KERN_DEBUG "usb: %s composite_manufacturer=%s\n",
+			__func__, composite_manufacturer);
 
 	if (iProduct || (!cdev->desc.iProduct && composite->iProduct))
 		cdev->product_override =

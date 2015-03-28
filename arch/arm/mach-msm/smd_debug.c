@@ -843,32 +843,9 @@ void smsm_print_sleep_info(uint32_t sleep_delay, uint32_t sleep_limit,
 
 	spin_lock_irqsave(&smem_lock, flags);
 
-	pr_info("SMEM_SMSM_SLEEP_DELAY: %x\n", sleep_delay);
-	pr_info("SMEM_SMSM_LIMIT_SLEEP: %x\n", sleep_limit);
-
 	ptr = smem_alloc(SMEM_SLEEP_POWER_COLLAPSE_DISABLED, sizeof(*ptr));
-	if (ptr)
-		pr_info("SMEM_SLEEP_POWER_COLLAPSE_DISABLED: %x\n", *ptr);
-	else
-		pr_info("SMEM_SLEEP_POWER_COLLAPSE_DISABLED: missing\n");
-
-	pr_info("SMEM_SMSM_INT_INFO %x %x %x\n",
-		irq_mask, pending_irqs, wakeup_reason);
 
 	gpio = smem_alloc(SMEM_GPIO_INT, sizeof(*gpio));
-	if (gpio) {
-		int i;
-		for (i = 0; i < NUM_GPIO_INT_REGISTERS; i++)
-			pr_info("SMEM_GPIO_INT: %d: e %x d %x p %x\n",
-				i, gpio->enabled[i], gpio->detection[i],
-				gpio->polarity[i]);
-
-		for (i = 0; i < GPIO_SMEM_NUM_GROUPS; i++)
-			pr_info("SMEM_GPIO_INT: %d: f %d: %d %d...\n",
-				i, gpio->num_fired[i], gpio->fired[i][0],
-				gpio->fired[i][1]);
-	} else
-		pr_info("SMEM_GPIO_INT: missing\n");
 
 	spin_unlock_irqrestore(&smem_lock, flags);
 }

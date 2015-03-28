@@ -61,6 +61,8 @@ obj-$(CONFIG_TSIF) += msm_tsif.o
 msm_tsif-objs := tsif.o
 obj-$(CONFIG_TSIF_CHRDEV) += tsif_chrdev.o
 obj-$(CONFIG_TSPP) += tspp.o
+obj-$(CONFIG_SAMSUNG_JACK) += sec_jack.o
+obj-$(CONFIG_FSAXXXX_USBSW)  += fsaxxxx_usbsw.o
 obj-$(CONFIG_HAPTIC_ISA1200)		+= isa1200.o
 obj-$(CONFIG_PMIC8058_PWM) += pmic8058-pwm.o
 obj-$(CONFIG_PMIC8XXX_VIBRATOR) += pm8xxx-vibrator.o
@@ -71,3 +73,7 @@ obj-$(CONFIG_MSM_MEMORY_LOW_POWER_MODE_SUSPEND_DEEP_POWER_DOWN) \
 obj-$(CONFIG_PMIC8058_XOADC) += pmic8058-xoadc.o
 obj-$(CONFIG_QSEECOM) += qseecom.o
 obj-$(CONFIG_QFP_FUSE) += qfp_fuse.o
+obj-$(CONFIG_SEC_MODEM) += modem_if/
+obj-$(CONFIG_SEC_MISC) += sec_misc.o sec_param.o
+obj-$(CONFIG_SEC_DEBUG) += sec_debug.o
+obj-$(CONFIG_SEC_DUMP) += sec_dump.o

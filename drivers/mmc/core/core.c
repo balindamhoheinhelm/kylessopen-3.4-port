@@ -1649,12 +1649,35 @@ static unsigned int mmc_erase_timeout(struct mmc_card *card,
 		return mmc_mmc_erase_timeout(card, arg, qty);
 }
 
+#define UNSTUFF_BITS(resp, start, size)					\
+	({								\
+		const int __size = size;				\
+		const u32 __mask = (__size < 32 ? 1 << __size : 0) - 1;	\
+		const int __off = 3 - ((start) / 32);			\
+		const int __shft = (start) & 31;			\
+		u32 __res;						\
+									\
+		__res = resp[__off] >> __shft;				\
+		if (__size + __shft > 32)				\
+			__res |= resp[__off-1] << ((32 - __shft) % 32);	\
+		__res & __mask;						\
+	})
+
 static int mmc_do_erase(struct mmc_card *card, unsigned int from,
 			unsigned int to, unsigned int arg)
 {
 	struct mmc_command cmd = {0};
 	unsigned int qty = 0;
 	int err;
+
+	u32 *resp = card->raw_csd;
+
+	/* For WriteProtection */
+	if (UNSTUFF_BITS(resp, 12, 2)) {
+		printk(KERN_ERR "eMMC set Write Protection mode, Can't be written or erased.");
+		err = -EIO;
+		goto out;
+	}
 
 	/*
 	 * qty is used to calculate the erase timeout which depends on how many
@@ -1744,6 +1767,14 @@ static int mmc_do_erase(struct mmc_card *card, unsigned int from,
 			err = -EIO;
 			goto out;
 		}
+
+		if (cmd.resp[0] & R1_WP_ERASE_SKIP) {
+			printk(KERN_ERR "error %d requesting status %#x (R1_WP_ERASE_SKIP)\n",
+				err, cmd.resp[0]);
+			err = -EIO;
+			goto out;
+		}
+
 	} while (!(cmd.resp[0] & R1_READY_FOR_DATA) ||
 		 R1_CURRENT_STATE(cmd.resp[0]) == R1_STATE_PRG);
 out:
@@ -1812,6 +1843,15 @@ int mmc_erase(struct mmc_card *card, unsigned int from, unsigned int nr,
 
 	/* 'from' and 'to' are inclusive */
 	to -= 1;
+
+	/* to set the Address in 16k (32 Sectors) */
+	if (arg == MMC_TRIM_ARG) {
+		if ((from % 32) != 0)
+			from = ((from >> 5) + 1) << 5;
+		to = (to >> 5) << 5;
+		if (from >= to)
+			return 0;
+	}
 
 	return mmc_do_erase(card, from, to, arg);
 }
@@ -2364,6 +2404,9 @@ int mmc_card_awake(struct mmc_host *host)
 
 	mmc_bus_put(host);
 
+	if (!host->card || host->index == 1)
+		mdelay(50);
+
 	return err;
 }
 EXPORT_SYMBOL(mmc_card_awake);
@@ -2649,7 +2692,11 @@ int mmc_pm_notify(struct notifier_block *notify_block,
 		}
 		host->rescan_disable = 0;
 		spin_unlock_irqrestore(&host->lock, flags);
-		mmc_detect_change(host, 0);
+		if (host->card && host->card->type == MMC_TYPE_SDIO)
+			printk(KERN_INFO
+				"%s(): WLAN SKIP DETECT CHANGE\n", __func__);
+		else
+			mmc_detect_change(host, 0);
 
 	}
 

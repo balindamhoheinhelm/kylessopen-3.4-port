@@ -25,13 +25,27 @@
 #include "board-msm7627a.h"
 #include "devices-msm7x2xa.h"
 
+/* SS_BLUETOOTH(taekyu.shin) 2012.03.26 */
+/* WCN2243 Bring-up, BT searching is available by this fix from qualcomm */
+#define GPIO_BLUETOOTH_LDO 82
+/* SS_BLUETOOTH(taekyu.shin) End */
+
+#define WLAN_33V_CONTROL_FOR_BT_ANTENNA
+
 #if defined(CONFIG_BT) && defined(CONFIG_MARIMBA_CORE)
 
-
+/* SS_BLUETOOTH(bg43.kim) 2012.03.21 */
+/* WCN2243 Bring-up, BT activation sucessful only for power-on process */
 static struct bt_vreg_info bt_vregs[] = {
 	{"msme1", 2, 1800000, 1800000, 0, NULL},
-	{"bt", 21, 2900000, 3300000, 1, NULL}
+#ifdef CONFIG_MACH_AMAZING_CDMA
+{"ldo18", 13, 3000000, 3000000, 0, NULL},
+#endif
 };
+/* SS_BLUETOOTH(bg43.kim) End */
+#ifdef WLAN_33V_CONTROL_FOR_BT_ANTENNA
+#define WLAN_33V_BT_FLAG (0x02)
+#endif
 
 static struct platform_device msm_bt_power_device = {
 	.name = "bt_power",
@@ -96,12 +110,14 @@ static unsigned fm_i2s_config_power_off[] = {
 	GPIO_CFG(71, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
 };
 
-int gpio_bt_sys_rest_en = 133;
+/* SS_BLUETOOTH(bg43.kim) 2012.03.21 */
+/* WCN2243 Bring-up, BT activation sucessful only for power-on process */
+int gpio_bt_sys_rest_en = 34;
 static void gpio_bt_config(void)
 {
 	u32 socinfo = socinfo_get_platform_version();
 	if (machine_is_msm7627a_qrd1())
-		gpio_bt_sys_rest_en = 114;
+		gpio_bt_sys_rest_en = 34;
 	if (machine_is_msm7627a_evb() || machine_is_msm8625_evb()
 				|| machine_is_msm8625_evt())
 		gpio_bt_sys_rest_en = 16;
@@ -114,6 +130,7 @@ static void gpio_bt_config(void)
 			gpio_bt_sys_rest_en = 85;
 	}
 }
+/* SS_BLUETOOTH(bg43.kim) End */
 
 static int bt_set_gpio(int on)
 {
@@ -697,6 +714,41 @@ reg_disable:
 }
 
 static struct regulator *reg_s3;
+
+
+/* SS_BLUETOOTH(taekyu.shin) 2012.03.26 */
+/* WCN2243 Bring-up, BT searching is available by this fix from qualcomm */
+static int bluetooth_setup_ldo(unsigned gpio, int on)
+{
+	int rc = 0;
+
+	printk("%s - %d : %s\n", __func__, gpio, on ? "on" : "off");
+
+	// Request
+	if (gpio_request(gpio, "bt_en_gpio")) {
+		printk(KERN_ERR "%s: gpio_request for %d failed\n",
+				__func__, gpio);
+		return -1;
+	}
+	int temp = gpio_get_value(gpio);
+       printk( "%s:gpio_direction_output before(%d):: gpio_get_value=%d\n", __func__, on, temp);
+
+	rc = gpio_direction_output(gpio, on);
+
+        temp = gpio_get_value(gpio);
+       printk( "%s:gpio_direction_output after(%d):: gpio_get_value=%d\n", __func__, on, temp);
+
+	gpio_free(gpio);
+
+	if (rc) {
+		printk(KERN_ERR "%s: gpio_direction_output for %d failed\n",
+				__func__, gpio);
+		return -1;
+	}
+	return 0;
+}
+/* SS_BLUETOOTH(taekyu.shin) End */
+
 static unsigned int msm_bahama_setup_power(void)
 {
 	int rc = 0;
@@ -841,7 +893,15 @@ static int bluetooth_power(int on)
 		return -ENODEV;
 	}
 	if (on) {
-		/*setup power for BT SOC*/
+#ifdef WLAN_33V_CONTROL_FOR_BT_ANTENNA
+		/* setup antenna configuration*/
+#ifdef CONFIG_MACH_AMAZING_CDMA
+		wlan_enable_ldo_33v(on);
+#else
+		wlan_setup_ldo_33v(WLAN_33V_BT_FLAG, 1);
+#endif
+#endif
+/*setup power for BT SOC*/
 		rc = bt_set_gpio(on);
 		if (rc) {
 			pr_err("%s: bt_set_gpio = %d\n",
@@ -854,6 +914,20 @@ static int bluetooth_power(int on)
 					__func__, rc);
 			goto exit;
 		}
+
+/* SS_BLUETOOTH(taekyu.shin) 2012.03.26 */
+/* WCN2243 Bring-up, BT searching is available by this fix from qualcomm */
+#ifndef CONFIG_MACH_AMAZING_CDMA
+		 if (bluetooth_setup_ldo(GPIO_BLUETOOTH_LDO,1))
+		 {
+					pr_err("%s: GPIO_BLUETOOTH_LDO fail = %d\n",
+							__func__, GPIO_BLUETOOTH_LDO);
+		   return -ENODEV;
+		  }
+			msleep(100);
+/* SS_BLUETOOTH(taekyu.shin) End */
+#endif
+				
 		/*setup BT GPIO lines*/
 		for (pin = 0; pin < ARRAY_SIZE(bt_config_power_on);
 			pin++) {
@@ -902,6 +976,19 @@ static int bluetooth_power(int on)
 		if (rc < 0)
 			pr_err("%s: bahama_bt rc = %d", __func__, rc);
 
+#ifndef CONFIG_MACH_AMAZING_CDMA
+/* SS_BLUETOOTH(taekyu.shin) 2012.03.26 */
+/* WCN2243 Bring-up, BT searching is available by this fix from qualcomm */
+		 if (bluetooth_setup_ldo(GPIO_BLUETOOTH_LDO,0))
+		 {
+					pr_err("%s: GPIO_BLUETOOTH_LDO fail = %d\n",
+							__func__, GPIO_BLUETOOTH_LDO);
+		   return -ENODEV;
+		  }
+			msleep(100);
+/* SS_BLUETOOTH(taekyu.shin) End */
+#endif
+
 		rc = msm_bahama_setup_pcm_i2s(BT_PCM_OFF);
 		if (rc < 0) {
 			pr_err("%s: msm_bahama_setup_pcm_i2s, rc =%d\n",
@@ -912,6 +999,14 @@ static int bluetooth_power(int on)
 			pr_err("%s: bt_set_gpio = %d\n",
 					__func__, rc);
 		}
+#ifdef WLAN_33V_CONTROL_FOR_BT_ANTENNA
+		/* setup antenna configuration*/
+#ifdef CONFIG_MACH_AMAZING_CDMA
+		wlan_enable_ldo_33v(on);
+#else
+		wlan_setup_ldo_33v(WLAN_33V_BT_FLAG, 0);
+#endif
+#endif
 fail_i2c:
 		rc = pmapp_clock_vote(id, PMAPP_CLOCK_ID_D1,
 				  PMAPP_CLOCK_VOTE_OFF);

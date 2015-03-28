@@ -217,6 +217,9 @@ static int __init bluepintest_init(void)
 					0, &pintest_debugfs_fops) == NULL) {
 		printk(KERN_ERR "%s(%d): debugfs_create_file: index fail\n",
 							__FILE__, __LINE__);
+	/*[SEL_BLUETOOTH_SAURABH] P120612-2783 CHANGES START */
+	debugfs_remove(pin_debugfs_dent);
+	/*[SEL_BLUETOOTH_SAURABH] P120612-2783 CHANGES END */
 		return -ENOMEM;
 	}
 	return 0;

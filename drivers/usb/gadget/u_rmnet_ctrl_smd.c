@@ -33,38 +33,38 @@ static struct workqueue_struct *grmnet_ctrl_wq;
 #define CH_OPENED	0
 #define CH_READY	1
 struct smd_ch_info {
-	struct smd_channel	*ch;
-	char			*name;
-	unsigned long		flags;
-	wait_queue_head_t	wait;
-	unsigned		dtr;
+struct smd_channel	*ch;
+char			*name;
+unsigned long		flags;
+wait_queue_head_t	wait;
+unsigned		dtr;
 
-	struct list_head	tx_q;
-	unsigned long		tx_len;
+struct list_head	tx_q;
+unsigned long		tx_len;
 
-	struct work_struct	read_w;
-	struct work_struct	write_w;
+struct work_struct	read_w;
+struct work_struct	write_w;
 
-	struct rmnet_ctrl_port	*port;
+struct rmnet_ctrl_port	*port;
 
-	int			cbits_tomodem;
-	/* stats */
-	unsigned long		to_modem;
-	unsigned long		to_host;
+int			cbits_tomodem;
+/* stats */
+unsigned long		to_modem;
+unsigned long		to_host;
 };
 
 struct rmnet_ctrl_port {
-	struct smd_ch_info	ctrl_ch;
-	unsigned int		port_num;
-	struct grmnet		*port_usb;
+struct smd_ch_info	ctrl_ch;
+unsigned int		port_num;
+struct grmnet		*port_usb;
 
-	spinlock_t		port_lock;
-	struct delayed_work	connect_w;
+spinlock_t		port_lock;
+struct delayed_work	connect_w;
 };
 
 static struct rmnet_ctrl_ports {
-	struct rmnet_ctrl_port *port;
-	struct platform_driver pdrv;
+struct rmnet_ctrl_port *port;
+struct platform_driver pdrv;
 } ctrl_smd_ports[NR_CTRL_SMD_PORTS];
 
 
@@ -72,27 +72,27 @@ static struct rmnet_ctrl_ports {
 
 static struct rmnet_ctrl_pkt *alloc_rmnet_ctrl_pkt(unsigned len, gfp_t flags)
 {
-	struct rmnet_ctrl_pkt *pkt;
+struct rmnet_ctrl_pkt *pkt;
 
-	pkt = kzalloc(sizeof(struct rmnet_ctrl_pkt), flags);
-	if (!pkt)
-		return ERR_PTR(-ENOMEM);
+pkt = kzalloc(sizeof(struct rmnet_ctrl_pkt), flags);
+if (!pkt)
+return ERR_PTR(-ENOMEM);
 
-	pkt->buf = kmalloc(len, flags);
-	if (!pkt->buf) {
-		kfree(pkt);
-		return ERR_PTR(-ENOMEM);
-	}
+pkt->buf = kmalloc(len, flags);
+if (!pkt->buf) {
+kfree(pkt);
+return ERR_PTR(-ENOMEM);
+}
 
-	pkt->len = len;
+pkt->len = len;
 
-	return pkt;
+return pkt;
 }
 
 static void free_rmnet_ctrl_pkt(struct rmnet_ctrl_pkt *pkt)
 {
-	kfree(pkt->buf);
-	kfree(pkt);
+kfree(pkt->buf);
+kfree(pkt);
 }
 
 /*--------------------------------------------- */
@@ -101,15 +101,17 @@ static void free_rmnet_ctrl_pkt(struct rmnet_ctrl_pkt *pkt)
 
 static void grmnet_ctrl_smd_read_w(struct work_struct *w)
 {
-	struct smd_ch_info *c = container_of(w, struct smd_ch_info, read_w);
-	struct rmnet_ctrl_port *port = c->port;
-	int sz;
-	size_t len;
-	void *buf;
-	unsigned long flags;
+struct smd_ch_info *c = container_of(w, struct smd_ch_info, read_w);
+struct rmnet_ctrl_port *port = c->port;
+int sz;
+size_t len;
+void *buf;
+unsigned long flags;
 
 	spin_lock_irqsave(&port->port_lock, flags);
 	while (c->ch) {
+                if (c->ch == NULL)
+                        break;
 		sz = smd_cur_packet_size(c->ch);
 		if (sz <= 0)
 			break;

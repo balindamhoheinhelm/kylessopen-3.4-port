@@ -570,6 +570,15 @@ static int __init socinfo_create_files(struct sys_device *dev,
 	return 0;
 }
 
+static void __init socinfo_remove_files(struct sys_device *dev,
+					struct sysdev_attribute files[],
+					int size)
+{
+	int i;
+	for (i = 0; i < size; i++)
+		sysdev_remove_file(dev, &files[i]);
+}
+
 static int __init socinfo_init_sysdev(void)
 {
 	int err;
@@ -582,46 +591,113 @@ static int __init socinfo_init_sysdev(void)
 	err = sysdev_class_register(&soc_sysdev_class);
 	if (err) {
 		pr_err("%s: sysdev_class_register fail (%d)\n",
-		       __func__, err);
-		return err;
+		__func__, err);
+		goto ret;
 	}
+
 	err = sysdev_register(&soc_sys_device);
 	if (err) {
 		pr_err("%s: sysdev_register fail (%d)\n",
 		       __func__, err);
-		return err;
+		goto sys_class;
 	}
-	socinfo_create_files(&soc_sys_device, socinfo_v1_files,
+
+	err = socinfo_create_files(&soc_sys_device, socinfo_v1_files,
 				ARRAY_SIZE(socinfo_v1_files));
+
+	if (err) {
+		pr_err("%s: socinfo_create_files fail (%d)\n",
+		       __func__, err);
+		goto sys_reg;
+	}
+
 	if (socinfo->v1.format < 2)
-		return err;
-	socinfo_create_files(&soc_sys_device, socinfo_v2_files,
+		goto sys_reg ;
+
+	err = socinfo_create_files(&soc_sys_device, socinfo_v2_files,
 				ARRAY_SIZE(socinfo_v2_files));
 
-	if (socinfo->v1.format < 3)
-		return err;
+	if (err) {
+		pr_err("%s: socinfo_create_files fail (%d)\n",
+		       __func__, err);
+		goto soc_info2;
+	}
 
-	socinfo_create_files(&soc_sys_device, socinfo_v3_files,
+	if (socinfo->v1.format < 3)
+		goto soc_info2;
+
+	err = socinfo_create_files(&soc_sys_device, socinfo_v3_files,
 				ARRAY_SIZE(socinfo_v3_files));
 
-	if (socinfo->v1.format < 4)
-		return err;
+	if (err) {
+		pr_err("%s: socinfo_create_files fail (%d)\n",
+		       __func__, err);
+		goto soc_info3;
+	}
 
-	socinfo_create_files(&soc_sys_device, socinfo_v4_files,
+	if (socinfo->v1.format < 4)
+		goto soc_info3;
+
+	err = socinfo_create_files(&soc_sys_device, socinfo_v4_files,
 				ARRAY_SIZE(socinfo_v4_files));
 
-	if (socinfo->v1.format < 5)
-		return err;
+	if (err) {
+		pr_err("%s: socinfo_create_files fail (%d)\n",
+		       __func__, err);
+		goto soc_info4;
+	}
 
-	socinfo_create_files(&soc_sys_device, socinfo_v5_files,
+#ifdef CONFIG_MACH_KYLE
+	goto ret;
+#endif
+
+	if (socinfo->v1.format < 5)
+		goto soc_info4;
+
+	err = socinfo_create_files(&soc_sys_device, socinfo_v5_files,
 				ARRAY_SIZE(socinfo_v5_files));
 
-	if (socinfo->v1.format < 6)
-		return err;
+	if (err) {
+		pr_err("%s: socinfo_create_files fail (%d)\n",
+		       __func__, err);
+		goto soc_info5;
+	}
 
-	return socinfo_create_files(&soc_sys_device, socinfo_v6_files,
+	if (socinfo->v1.format < 6)
+		goto soc_info5;
+
+	err = socinfo_create_files(&soc_sys_device, socinfo_v6_files,
 				ARRAY_SIZE(socinfo_v6_files));
 
+	if (err) {
+		pr_err("%s: socinfo_create_files fail (%d)\n",
+		       __func__, err);
+		goto soc_info6;
+	}
+
+	goto ret;
+
+soc_info6:
+	socinfo_remove_files(&soc_sys_device, socinfo_v5_files,
+				ARRAY_SIZE(socinfo_v1_files));
+soc_info5:
+	socinfo_remove_files(&soc_sys_device, socinfo_v4_files,
+				ARRAY_SIZE(socinfo_v1_files));
+soc_info4:
+	socinfo_remove_files(&soc_sys_device, socinfo_v3_files,
+				ARRAY_SIZE(socinfo_v1_files));
+soc_info3:
+	socinfo_remove_files(&soc_sys_device, socinfo_v2_files,
+				ARRAY_SIZE(socinfo_v1_files));
+soc_info2:
+	socinfo_remove_files(&soc_sys_device, socinfo_v1_files,
+				ARRAY_SIZE(socinfo_v1_files));
+sys_reg:
+	sysdev_unregister(&soc_sys_device);
+sys_class:
+	sysdev_class_unregister(&soc_sysdev_class);
+ret:
+	return err;
 }
 
 arch_initcall(socinfo_init_sysdev);

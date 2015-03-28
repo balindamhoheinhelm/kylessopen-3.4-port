@@ -665,6 +665,8 @@ adreno_probe(struct platform_device *pdev)
 	int status = -EINVAL;
 
 	device = (struct kgsl_device *)pdev->id_entry->driver_data;
+	if (device == NULL)
+		return status;
 	adreno_dev = ADRENO_DEVICE(device);
 	device->parentdev = &pdev->dev;
 
@@ -948,6 +950,7 @@ int adreno_dump_and_recover(struct kgsl_device *device)
 		kgsl_device_snapshot(device, 1);
 
 		result = adreno_recover_hang(device);
+		BUG_ON(true);
 		if (result)
 			kgsl_pwrctrl_set_state(device, KGSL_STATE_HUNG);
 		else

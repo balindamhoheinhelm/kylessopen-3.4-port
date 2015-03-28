@@ -578,6 +578,13 @@ config TSPP
 	processing of MPEG transport streams from the main processor.
 	This can also be compiled as a loadable module.
 
+config SAMSUNG_JACK
+	bool "3.5 PI EAR_JACK driver for Samsung devices"
+	depends on INPUT
+	default n
+	---help---
+	  This is 3.5 PI EAR_JACK driver for Samsung devices.
+
 config HAPTIC_ISA1200
 	tristate "ISA1200 haptic support"
 	depends on I2C
@@ -653,6 +660,29 @@ config USB_HSIC_SMSC_HUB
 	  This adds support for connecting devices like mouse in HSIC
 	  Host mode.
 
+config FSAXXXX_USBSW
+	bool "Fairchild FSAxxxx USB switch Driver"
+	depends on I2C
+	default n
+
+config SEC_MISC
+	bool "Samsung P series miscellaneous driver"
+	default n
+	---help---
+	  Samsung P series miscellaneous driver
+
+config SEC_DEBUG
+	bool "Samsung Debug Code"
+	default n
+	---help---
+	  Samsung debug code	
+
+config SEC_DUMP
+	bool "Samsung DUMP Code"
+	default n
+	---help---
+	  Samsung dump code		  
+
 source "drivers/misc/c2port/Kconfig"
 source "drivers/misc/eeprom/Kconfig"
 source "drivers/misc/cb710/Kconfig"
@@ -661,4 +691,5 @@ source "drivers/misc/ti-st/Kconfig"
 source "drivers/misc/lis3lv02d/Kconfig"
 source "drivers/misc/carma/Kconfig"
 source "drivers/misc/altera-stapl/Kconfig"
+source "drivers/misc/modem_if/Kconfig"
 endmenu

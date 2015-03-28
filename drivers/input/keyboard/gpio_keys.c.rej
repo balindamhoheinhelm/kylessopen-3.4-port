@@ -1,0 +1,23 @@
+--- drivers/input/keyboard/gpio_keys.c	2013-04-19 11:37:14.000000000 +0200
++++ drivers/input/keyboard/gpio_keys.c	2014-08-29 08:16:14.052240000 +0200
+@@ -25,6 +25,12 @@
+ #include <linux/gpio_keys.h>
+ #include <linux/workqueue.h>
+ #include <linux/gpio.h>
++#include <linux/sec_debug.h>
++
++#if !defined(CONFIG_MACH_KYLE)
++#include "../../dpram/dpram.h"
++#endif
++
+ 
+ struct gpio_button_data {
+ 	struct gpio_keys_button *button;
+@@ -33,6 +39,7 @@
+ 	struct work_struct work;
+ 	int timer_debounce;	/* in msecs */
+ 	bool disabled;
++	bool key_state;
+ };
+ 
+ struct gpio_keys_drvdata {

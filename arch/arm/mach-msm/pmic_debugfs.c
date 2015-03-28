@@ -1065,7 +1065,6 @@ static ssize_t pmic_debugfs_write(
 	if (copy_from_user(debug_buf, buff, count))
 		return -EFAULT;
 
-
 	debug_buf[count] = 0;	/* end of string */
 
 	pd = &pmic_debug[debug_proc];

@@ -16,6 +16,9 @@ config MT9T013
 	default y
 	---help---
 	  MICRON 3M Bayer Sensor with AutoFocus
+config MT9V113
+	bool "Sensor mt9v113 (YUV 1.3M)"
+	default n	  
 config MT9D113
 	bool "Sensor mt9d113 (YUV 2M)"
 	depends on MSM_CAMERA && ARCH_MSM8X60 && !MSM_CAMERA_V4L2
@@ -176,6 +179,51 @@ config MSM_CAMERA_FLASH_SC628A
 	  It is a samtech charge pump flash driver and it
 	  supports spotlight and flash light modes with
 	  differrent current levels.
+config S5K4ECGX
+	bool "Sensor S5K4ECGX (LSI 5M)"
+	default n
+	---help---
+	  Support for IMX072 sony sensor driver.
+	  It is a Bayer 5MP sensor with auto focus and it supports
+	  two mipi lanes, required for msm7x2xA platform.
+	  Say Y here if this is msm7x2xA variant platform.
+
+config S5K4ECGX_KYLE
+	bool "Sensor S5K4ECGX (LSI 5M) for KYLE"
+	default n
+	---help---
+	  Support for IMX072 sony sensor driver.
+	  It is a Bayer 5MP sensor with auto focus and it supports
+	  two mipi lanes, required for msm7x2xA platform.
+	  Say Y here if this is msm7x2xA variant platform.
+
+config SR030PC50
+	bool "Sensor SR030PC50 (SF 0.3M)"
+	default n
+	---help---
+	  Support for 030pc50 silicon file sensor driver.
+	  It is a 0.3MP sensor with No-auto focus and it supports
+	  two mipi lanes, required for msm7x2xA platform.
+	  Say Y here if this is msm7x2xA variant platform.
+
+config MSM_CAMERA_FLASH_KTD262EJH
+	bool "Kinetic camera flash support"
+	depends on MSM_CAMERA
+	default y
+	---help---
+	  Enable support for LED flash for msm camera
+
+config S5K5CCGX
+	bool "Sensor s5k5ccgx (3M)"
+	depends on MSM_CAMERA
+	default n 
+	---help---
+	  LSI 3M Sensor with Autofocus
+
+config SR300PC20
+	bool "Sensor sr300pc20 (3M)"
+	depends on MSM_CAMERA
+	default n
 
 config MSM_CAMERA_FLASH_TPS61310
 	bool "Qualcomm MSM camera tps61310 flash support"

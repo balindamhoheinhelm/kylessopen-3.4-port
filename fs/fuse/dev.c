@@ -1127,7 +1127,7 @@ static ssize_t fuse_dev_do_read(struct fuse_conn *fc, struct file *file,
 		goto err_unlock;
 
 	if (!list_empty(&fc->interrupts)) {
-		req = list_entry(fc->interrupts.next, struct fuse_req,
+		req = list_entry(fc->interrupts, struct fuse_req,
 				 intr_entry);
 		return fuse_read_interrupt(fc, cs, nbytes, req);
 	}
@@ -1140,7 +1140,7 @@ static ssize_t fuse_dev_do_read(struct fuse_conn *fc, struct file *file,
 			fc->forget_batch = 16;
 	}
 
-	req = list_entry(fc->pending.next, struct fuse_req, list);
+	req = list_entry(fc->pending, struct fuse_req, list);
 	req->state = FUSE_REQ_READING;
 	list_move(&req->list, &fc->io);
 

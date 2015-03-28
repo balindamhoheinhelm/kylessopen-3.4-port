@@ -288,4 +288,5 @@ struct clk *clk_get_sys(const char *dev_id, const char *con_id);
 int clk_add_alias(const char *alias, const char *alias_dev_name, char *id,
 			struct device *dev);
 
+int clk_set_min_rate(struct clk *clk, unsigned long rate);
 #endif

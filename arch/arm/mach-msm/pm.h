@@ -43,6 +43,10 @@ struct msm_pm_irq_calls {
 							uint32_t pending_irqs);
 };
 
+#if defined(CONFIG_MACH_KYLE)
+extern int msm_batt_progress;
+#endif
+
 enum msm_pm_sleep_mode {
 	MSM_PM_SLEEP_MODE_WAIT_FOR_INTERRUPT = 0,
 	MSM_PM_SLEEP_MODE_RAMP_DOWN_AND_WAIT_FOR_INTERRUPT = 1,

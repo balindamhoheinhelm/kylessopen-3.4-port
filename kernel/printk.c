@@ -172,6 +172,26 @@ void log_buf_kexec_setup(void)
 }
 #endif
 
+#ifdef CONFIG_APPLY_GA_SOLUTION
+/* Mark for GetLog */
+
+struct struct_kernel_log_mark {
+	u32 special_mark_1;
+	u32 special_mark_2;
+	u32 special_mark_3;
+	u32 special_mark_4;
+	void *p__log_buf;
+};
+
+static struct struct_kernel_log_mark kernel_log_mark = {
+	.special_mark_1 = (('*' << 24) | ('^' << 16) | ('^' << 8) | ('*' << 0)),
+	.special_mark_2 = (('I' << 24) | ('n' << 16) | ('f' << 8) | ('o' << 0)),
+	.special_mark_3 = (('H' << 24) | ('e' << 16) | ('r' << 8) | ('e' << 0)),
+	.special_mark_4 = (('k' << 24) | ('l' << 16) | ('o' << 8) | ('g' << 0)),
+	.p__log_buf = __log_buf+0x200000, 
+};
+#endif
+
 /* requested log_buf_len from kernel cmdline */
 static unsigned long __initdata new_log_buf_len;
 
@@ -204,7 +224,13 @@ void __init setup_log_buf(int early)
 
 		mem = memblock_alloc(new_log_buf_len, PAGE_SIZE);
 		if (!mem)
+		{
+#ifdef CONFIG_APPLY_GA_SOLUTION
+			/* Mark for GetLog */
+			kernel_log_mark.p__log_buf = __log_buf+0x200000;
+#endif
 			return;
+		}
 		new_log_buf = __va(mem);
 	} else {
 		new_log_buf = alloc_bootmem_nopanic(new_log_buf_len);
@@ -213,6 +239,10 @@ void __init setup_log_buf(int early)
 	if (unlikely(!new_log_buf)) {
 		pr_err("log_buf_len: %ld bytes not available\n",
 			new_log_buf_len);
+#ifdef CONFIG_APPLY_GA_SOLUTION
+			/* Mark for GetLog */
+		kernel_log_mark.p__log_buf = __log_buf+0x200000;
+#endif
 		return;
 	}
 
@@ -239,6 +269,11 @@ void __init setup_log_buf(int early)
 	pr_info("log_buf_len: %d\n", log_buf_len);
 	pr_info("early log buf free: %d(%d%%)\n",
 		free, (free * 100) / __LOG_BUF_LEN);
+
+#ifdef CONFIG_APPLY_GA_SOLUTION
+	/* Mark for GetLog */
+	kernel_log_mark.p__log_buf = __log_buf+0x200000;
+#endif
 }
 
 #ifdef CONFIG_BOOT_PRINTK_DELAY

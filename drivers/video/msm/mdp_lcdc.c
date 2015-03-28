@@ -283,7 +283,6 @@ static int mdp_lcdc_probe(struct platform_device *pdev)
 	struct msm_lcdc_platform_data *pdata = pdev->dev.platform_data;
 	struct mdp_lcdc_info *lcdc;
 	int ret = 0;
-
 	if (!pdata) {
 		pr_err("%s: no LCDC platform data found\n", __func__);
 		return -EINVAL;

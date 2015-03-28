@@ -1,0 +1,51 @@
+--- arch/arm/mach-msm/devices-msm7x27a.c	2013-04-19 11:37:14.000000000 +0200
++++ arch/arm/mach-msm/devices-msm7x27a.c	2014-08-29 08:20:15.292248000 +0200
+@@ -538,13 +558,14 @@
+ int __init msm_add_sdcc(unsigned int controller, struct mmc_platform_data *plat)
+ {
+ 	struct platform_device	*pdev;
+-
++    int ret;
+ 	if (controller < 1 || controller > 4)
+ 		return -EINVAL;
+ 
+ 	pdev = msm_sdcc_devices[controller-1];
+ 	pdev->dev.platform_data = plat;
+-	return platform_device_register(pdev);
++	ret = platform_device_register(pdev);
++	return ret;
+ }
+ 
+ #ifdef CONFIG_MSM_CAMERA_V4L2
+@@ -815,18 +838,28 @@
+ 
+ static int msm7627a_init_gpio(void)
+ {
+-	platform_device_register(&msm_device_gpio);
+-	return 0;
++	int ret = 0;
++
++	ret = platform_device_register(&msm_device_gpio);
++	return ret;
+ }
+ postcore_initcall(msm7627a_init_gpio);
+ 
++
++
+ int __init msm7x2x_misc_init(void)
+ {
+-	msm_clock_init(&msm7x27a_clock_init_data);
++	if (!kernel_uart_flag)
++		msm_clock_init(&msm7x27a_uart_clock_init_data);
++	else
++		msm_clock_init(&msm7x27a_clock_init_data);
++
+ 	if (cpu_is_msm7x27aa() || cpu_is_msm7x25ab())
+ 		acpuclk_init(&acpuclk_7x27aa_soc_data);
+ 	else
+ 		acpuclk_init(&acpuclk_7x27a_soc_data);
++		
++	
+ 
+ 
+ 	return 0;

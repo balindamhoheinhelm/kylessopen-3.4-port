@@ -292,10 +292,18 @@ static ssize_t print_switch_state(struct switch_dev *sdev, char *buf)
 
 static inline enum chg_type usb_get_chg_type(struct usb_info *ui)
 {
+#ifdef CONFIG_USB_ANDROID_SAMSUNG_COMPOSITE
+	if (ui->pdata->get_usb_chg_type &&
+		ui->pdata->get_usb_chg_type() == USB_CHG_TYPE__WALLCHARGER)
+		return USB_CHG_TYPE__WALLCHARGER;
+	else
+		return USB_CHG_TYPE__SDP;
+#else
 	if ((readl(USB_PORTSC) & PORTSC_LS) == PORTSC_LS)
 		return USB_CHG_TYPE__WALLCHARGER;
 	else
 		return USB_CHG_TYPE__SDP;
+#endif
 }
 
 #define USB_WALLCHARGER_CHG_CURRENT 1800
@@ -2025,11 +2033,11 @@ static void usb_debugfs_init(struct usb_info *ui)
 		return;
 
 	debugfs_create_file("status", 0444, dent, ui, &debug_stat_ops);
-	debugfs_create_file("reset", 0222, dent, ui, &debug_reset_ops);
-	debugfs_create_file("cycle", 0222, dent, ui, &debug_cycle_ops);
-	debugfs_create_file("release_wlocks", 0666, dent, ui,
+	debugfs_create_file("reset", 0444, dent, ui, &debug_reset_ops);
+	debugfs_create_file("cycle", 0444, dent, ui, &debug_cycle_ops);
+	debugfs_create_file("release_wlocks", 0664, dent, ui,
 						&debug_wlocks_ops);
-	debugfs_create_file("prime_fail_countt", 0666, dent, ui,
+	debugfs_create_file("prime_fail_countt", 0664, dent, ui,
 						&prime_fail_ops);
 }
 #else

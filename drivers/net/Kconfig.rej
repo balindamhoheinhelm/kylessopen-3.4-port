@@ -1,0 +1,11 @@
+--- drivers/net/Kconfig	2013-04-19 11:37:14.000000000 +0200
++++ drivers/net/Kconfig	2014-08-29 08:16:15.136240000 +0200
+@@ -3445,7 +3445,7 @@
+ config MSM_RMNET
+ 	tristate "MSM RMNET Virtual Network Device"
+ 	depends on ARCH_MSM
+-	default y
++	default n
+ 	help
+ 	  Virtual ethernet interface for MSM RMNET transport.
+ 

@@ -1,0 +1,24 @@
+--- fs/ext4/extents.c	2013-04-19 11:37:14.000000000 +0200
++++ fs/ext4/extents.c	2014-08-29 08:16:35.388241000 +0200
+@@ -2469,10 +2469,6 @@
+ 		if (uninitialized && num)
+ 			ext4_ext_mark_uninitialized(ex);
+ 
+-		err = ext4_ext_dirty(handle, inode, path + depth);
+-		if (err)
+-			goto out;
+-
+ 		/*
+ 		 * If the extent was completely released,
+ 		 * we need to remove it from the leaf
+@@ -2494,6 +2490,10 @@
+ 			le16_add_cpu(&eh->eh_entries, -1);
+ 		}
+ 
++		err = ext4_ext_dirty(handle, inode, path + depth);
++		if (err)
++			goto out;
++
+ 		ext_debug("new extent: %u:%u:%llu\n", block, num,
+ 				ext4_ext_pblock(ex));
+ 		ex--;

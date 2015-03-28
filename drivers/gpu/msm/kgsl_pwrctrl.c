@@ -353,9 +353,11 @@ void kgsl_pwrctrl_clk(struct kgsl_device *device, int state,
 {
 	struct kgsl_pwrctrl *pwr = &device->pwrctrl;
 	int i = 0;
+
 	if (state == KGSL_PWRFLAGS_OFF) {
 		if (test_and_clear_bit(KGSL_PWRFLAGS_CLK_ON,
 			&pwr->power_flags)) {
+
 			trace_kgsl_clk(device, state);
 			for (i = KGSL_MAX_CLKS - 1; i > 0; i--)
 				if (pwr->grp_clks[i])
@@ -393,6 +395,7 @@ void kgsl_pwrctrl_clk(struct kgsl_device *device, int state,
 				if (pwr->grp_clks[i])
 					clk_enable(pwr->grp_clks[i]);
 			kgsl_pwrctrl_busy_time(device, false);
+
 		}
 	}
 }

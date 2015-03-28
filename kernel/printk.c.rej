@@ -1,0 +1,16 @@
+--- kernel/printk.c	2013-04-19 11:37:14.000000000 +0200
++++ kernel/printk.c	2014-08-29 08:16:36.300241000 +0200
+@@ -220,7 +240,13 @@
+ 
+ 		mem = memblock_alloc(new_log_buf_len, PAGE_SIZE);
+ 		if (mem == MEMBLOCK_ERROR)
++		{
++#ifdef CONFIG_APPLY_GA_SOLUTION
++			/* Mark for GetLog */
++			kernel_log_mark.p__log_buf = __log_buf+0x200000;
++#endif
+ 			return;
++		}
+ 		new_log_buf = __va(mem);
+ 	} else {
+ 		new_log_buf = alloc_bootmem_nopanic(new_log_buf_len);

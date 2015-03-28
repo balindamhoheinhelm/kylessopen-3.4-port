@@ -20,6 +20,30 @@
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 
+#if defined(CONFIG_MACH_KYLE) || defined(CONFIG_MACH_AMAZING)
+static unsigned int wakeup_keys_status;
+
+int gpio_event_get_wakeup_keys_status(void)
+{
+	return wakeup_keys_status;
+}
+
+static size_t wakeup_keys_store(struct device *dev,
+			struct device_attribute *attr,
+			const char *buf, size_t count)
+{
+	int err;
+	unsigned int base = 0;
+
+	err = kstrtouint(buf, 0, &base);
+	wakeup_keys_status = base;
+
+	return count;
+}
+
+static DEVICE_ATTR(wakeup_keys, 0664, NULL, wakeup_keys_store);
+#endif
+
 struct gpio_event {
 	struct gpio_event_input_devs *input_devs;
 	const struct gpio_event_platform_data *info;
@@ -113,6 +137,24 @@ static void __maybe_unused gpio_event_resume(struct gpio_event *ip)
 	gpio_event_call_all_func(ip, GPIO_EVENT_FUNC_RESUME);
 }
 
+#if defined(CONFIG_MACH_KYLE) || defined(CONFIG_MACH_AMAZING)
+#ifdef CONFIG_PM
+static int gpio_event_sleep(struct platform_device *pdev, pm_message_t state)
+{
+	struct gpio_event *ip = platform_get_drvdata(pdev);
+
+	return gpio_event_call_all_func(ip, GPIO_EVENT_FUNC_SUSPEND);
+}
+
+static int gpio_event_wakeup(struct platform_device *pdev)
+{
+	struct gpio_event *ip = platform_get_drvdata(pdev);
+
+	return gpio_event_call_all_func(ip, GPIO_EVENT_FUNC_RESUME);
+}
+#endif
+#endif
+
 static int gpio_event_probe(struct platform_device *pdev)
 {
 	int err;
@@ -179,7 +221,9 @@ static int gpio_event_probe(struct platform_device *pdev)
 		}
 		registered++;
 	}
-
+#if defined(CONFIG_MACH_KYLE) || defined(CONFIG_MACH_AMAZING)
+	err = device_create_file(&(pdev->dev), &dev_attr_wakeup_keys);
+#endif
 	return 0;
 
 err_input_register_device_failed:
@@ -209,6 +253,9 @@ static int gpio_event_remove(struct platform_device *pdev)
 		ip->info->power(ip->info, 0);
 	for (i = 0; i < ip->input_devs->count; i++)
 		input_unregister_device(ip->input_devs->dev[i]);
+#if defined(CONFIG_MACH_KYLE) || defined(CONFIG_MACH_AMAZING)
+	device_remove_file(&(pdev->dev), &dev_attr_wakeup_keys);
+#endif
 	kfree(ip);
 	return 0;
 }
@@ -219,6 +266,13 @@ static struct platform_driver gpio_event_driver = {
 	.driver		= {
 		.name	= GPIO_EVENT_DEV_NAME,
 	},
+
+#if defined(CONFIG_MACH_KYLE) || defined(CONFIG_MACH_AMAZING)
+#ifdef CONFIG_PM
+	.suspend	= gpio_event_sleep,
+	.resume		= gpio_event_wakeup,
+#endif
+#endif
 };
 
 static int __devinit gpio_event_init(void)

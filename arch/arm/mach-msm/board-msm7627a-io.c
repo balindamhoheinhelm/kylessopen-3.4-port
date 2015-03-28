@@ -801,9 +801,9 @@ void __init msm7627a_add_io_devices(void)
 		platform_device_register(&led_pdev);
 
 	/* Vibrator */
-	if (machine_is_msm7x27a_ffa() || machine_is_msm7625a_ffa()
-					|| machine_is_msm8625_ffa())
-		msm_init_pmic_vibrator();
+//	if (machine_is_msm7x27a_ffa() || machine_is_msm7625a_ffa()
+//					|| machine_is_msm8625_ffa())
+//		msm_init_pmic_vibrator();
 }
 
 void __init qrd7627a_add_io_devices(void)
@@ -854,7 +854,7 @@ void __init qrd7627a_add_io_devices(void)
 
 	/* vibrator */
 #ifdef CONFIG_MSM_RPC_VIBRATOR
-	msm_init_pmic_vibrator();
+//	msm_init_pmic_vibrator();
 #endif
 
 	/* keypad */

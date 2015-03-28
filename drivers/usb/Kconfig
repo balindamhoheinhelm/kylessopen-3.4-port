@@ -143,6 +143,12 @@ source "drivers/usb/image/Kconfig"
 comment "USB port drivers"
 	depends on USB
 
+config USB_ANDROID
+	boolean "Support for Important Usb functions"
+	default n
+	help
+	  USB Important functions are decided depends on this flag value  .
+
 config USB_USS720
 	tristate "USS720 parport driver"
 	depends on USB && PARPORT

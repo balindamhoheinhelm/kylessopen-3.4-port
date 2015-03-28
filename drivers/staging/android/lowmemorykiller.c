@@ -130,6 +130,31 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		task_unlock(p);
 		if (tasksize <= 0)
 			continue;
+
+#ifdef ENHANCED_LMK_ROUTINE
+		for (i = 0; i < LOWMEM_DEATHPENDING_DEPTH; i++) {
+			if (all_selected_oom >= LOWMEM_DEATHPENDING_DEPTH) {
+				if (oom_adj < selected_oom_adj[i])
+					continue;
+			if (oom_adj == selected_oom_adj[i] &&
+				tasksize <= selected_tasksize[i])
+				continue;
+			} else if (selected[i])
+				continue;
+
+			selected[i] = p;
+			selected_tasksize[i] = tasksize;
+			selected_oom_adj[i] = oom_adj;
+
+			if (all_selected_oom < LOWMEM_DEATHPENDING_DEPTH)
+				all_selected_oom++;
+
+			lowmem_print(2, "select %d (%s), adj %d, size %d, to kill\n",
+				p->pid, p->comm, oom_adj, tasksize);
+
+			break;
+		}
+#else
 		if (selected) {
 			if (oom_score_adj < selected_oom_score_adj)
 				continue;
@@ -152,6 +177,7 @@ static int lowmem_shrink(struct shrinker *s, struct shrink_control *sc)
 		set_tsk_thread_flag(selected, TIF_MEMDIE);
 		rem -= selected_tasksize;
 	}
+#endif
 	lowmem_print(4, "lowmem_shrink %lu, %x, return %d\n",
 		     sc->nr_to_scan, sc->gfp_mask, rem);
 	rcu_read_unlock();

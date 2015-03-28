@@ -35,6 +35,18 @@ static int pc_clk_enable(struct clk *clk)
 	if (id == P_EBI1_CLK || id == P_EBI1_FIXED_CLK)
 		return 0;
 
+	/* FIXME: disable clock id 86 initialy.
+	 * this clock block CP sleep.
+	 * this problem looks like Qualcomm issue.
+	 * Use follow code temporary until solve that.
+	 */
+#if 1
+	if (id == 86) {
+		pr_info("[%s] get 86 clk \n");
+		return 0;
+	}
+#endif
+
 	rc = msm_proc_comm(PCOM_CLKCTL_RPC_ENABLE, &id, NULL);
 	if (rc < 0)
 		return rc;
@@ -89,14 +101,14 @@ static int _pc_clk_set_rate(struct clk *clk, unsigned long rate)
 		return (int)id < 0 ? -EINVAL : 0;
 }
 
-static int _pc_clk_set_min_rate(struct clk *clk, unsigned long rate)
+static int pc_clk_set_min_rate(struct clk *clk, unsigned rate)
 {
 	int rc;
 	int id = to_pcom_clk(clk)->id;
 	bool ignore_error = (cpu_is_msm7x27() && id == P_EBI1_CLK &&
 				rate >= INT_MAX);
-	unsigned r = rate;
-	rc = msm_proc_comm(PCOM_CLKCTL_RPC_MIN_RATE, &id, &r);
+
+	rc = msm_proc_comm(PCOM_CLKCTL_RPC_MIN_RATE, &id, &rate);
 	if (rc < 0)
 		return rc;
 	else if (ignore_error)
@@ -108,7 +120,7 @@ static int _pc_clk_set_min_rate(struct clk *clk, unsigned long rate)
 static int pc_clk_set_rate(struct clk *clk, unsigned long rate)
 {
 	if (clk->flags & CLKFLAG_MIN)
-		return _pc_clk_set_min_rate(clk, rate);
+		return pc_clk_set_min_rate(clk, rate);
 	else
 		return _pc_clk_set_rate(clk, rate);
 }
@@ -192,6 +204,7 @@ struct clk_ops clk_ops_pcom = {
 	.disable = pc_clk_disable,
 	.reset = pc_reset,
 	.set_rate = pc_clk_set_rate,
+	.set_min_rate = pc_clk_set_min_rate,
 	.set_max_rate = pc_clk_set_max_rate,
 	.set_flags = pc_clk_set_flags,
 	.get_rate = pc_clk_get_rate,
@@ -206,6 +219,7 @@ struct clk_ops clk_ops_pcom_ext_config = {
 	.disable = pc_clk_disable,
 	.reset = pc_reset,
 	.set_rate = pc_clk_set_ext_config,
+	.set_min_rate = pc_clk_set_min_rate,
 	.set_max_rate = pc_clk_set_max_rate,
 	.set_flags = pc_clk_set_flags,
 	.get_rate = pc_clk_get_rate,

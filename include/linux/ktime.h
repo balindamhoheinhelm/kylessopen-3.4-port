@@ -45,7 +45,7 @@
  */
 union ktime {
 	s64	tv64;
-#if BITS_PER_LONG != 64 && !defined(CONFIG_KTIME_SCALAR)
+#if BITS_PER_LONG != 64 && defined(CONFIG_KTIME_SCALAR)
 	struct {
 # ifdef __BIG_ENDIAN
 	s32	sec, nsec;

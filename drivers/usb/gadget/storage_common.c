@@ -924,8 +924,15 @@ static ssize_t fsg_store_file(struct device *dev, struct device_attribute *attr,
 	struct rw_semaphore	*filesem = dev_get_drvdata(dev);
 	int		rc = 0;
 
-
-#ifndef CONFIG_USB_ANDROID_MASS_STORAGE
+/*
+Always allow disabling mass storage by writing to lun file
+For android builds we disable the check for curlun->prevent_medium_removal.
+Instead we let the framework manage unmounting policy, as we sometimes need
+to unmount after the media has been removed.
+This also helps support hosts that do not inform the device when the media
+has been unmounted.
+*/
+#if !defined(CONFIG_USB_ANDROID_MASS_STORAGE) && !defined(CONFIG_USB_G_ANDROID)
 	/* disabled in android because we need to allow closing the backing file
 	 * if the media was removed
 	 */

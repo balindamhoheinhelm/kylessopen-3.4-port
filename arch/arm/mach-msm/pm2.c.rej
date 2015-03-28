@@ -1,0 +1,45 @@
+--- arch/arm/mach-msm/pm2.c	2013-04-19 11:37:14.000000000 +0200
++++ arch/arm/mach-msm/pm2.c	2014-08-29 08:20:15.296248000 +0200
+@@ -29,6 +29,9 @@
+ #include <linux/uaccess.h>
+ #include <linux/io.h>
+ #include <linux/memory.h>
++
++#include <mach/vreg.h>
++#include <mach/gpio-v1.h>
+ #ifdef CONFIG_HAS_WAKELOCK
+ #include <linux/wakelock.h>
+ #endif
+@@ -62,6 +65,8 @@
+ #include "spm.h"
+ #include "sirc.h"
+ #include "pm-boot.h"
++#include <linux/sec_param.h>
++#include <linux/regulator/consumer.h>
+ 
+ /******************************************************************************
+  * Debug Definitions
+@@ -77,7 +82,8 @@
+ 	MSM_PM_DEBUG_IDLE = 1U << 6,
+ };
+ 
+-static int msm_pm_debug_mask;
++static int msm_pm_debug_mask = MSM_PM_DEBUG_POWER_COLLAPSE |
++					MSM_PM_DEBUG_SMSM_STATE;
+ module_param_named(
+ 	debug_mask, msm_pm_debug_mask, int, S_IRUGO | S_IWUSR | S_IWGRP
+ );
+@@ -1960,7 +2082,12 @@
+ 	atomic_set(&msm_pm_init_done, 1);
+ 	suspend_set_ops(&msm_pm_ops);
+ 
+-	msm_pm_mode_sysfs_add();
++	ret = msm_pm_mode_sysfs_add();
++	if (ret) {
++		printk(KERN_ERR "%s: failed to add sysfs node, %d\n",
++			__func__, ret);
++		return ret;
++	}
+ #ifdef CONFIG_MSM_IDLE_STATS
+ 	d_entry = create_proc_entry("msm_pm_stats",
+ 			S_IRUGO | S_IWUSR | S_IWGRP, NULL);

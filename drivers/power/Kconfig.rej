@@ -1,0 +1,25 @@
+--- drivers/power/Kconfig	2013-04-19 11:37:14.000000000 +0200
++++ drivers/power/Kconfig	2014-08-29 08:16:32.484241000 +0200
+@@ -357,4 +362,22 @@
+ 	help
+ 	  Say Y here to enable support for pm8921 chip bms subdevice
+ 
++config BQ27425_FUEL_GAUGE
++	tristate "TI BQ27425 Fuel Gauge"
++	depends on I2C
++	help
++	  BQ27425 is fuel-gauge systems for lithium-ion (Li+) batteries
++	  in handheld and portable equipment.
++config MAX17043_FUELGAUGE
++	tristate "Maxim MAX17043 Fuel Gauge"
++	depends on I2C
++	help
++	  MAX17043 is fuel-gauge systems for lithium-ion (Li+) batteries
++	  in handheld and portable equipment "
++config MAX17048_FUELGAUGE
++	tristate "Maxim MAX17048 Fuel Gauge"
++	depends on I2C
++	help
++	  MAX17048 is fuel-gauge systems for lithium-ion (Li+) batteries
++	  in handheld and portable equipment "
+ endif # POWER_SUPPLY

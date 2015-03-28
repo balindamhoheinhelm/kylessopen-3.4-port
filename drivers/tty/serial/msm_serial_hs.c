@@ -63,6 +63,24 @@
 
 #include "msm_serial_hs_hwreg.h"
 
+#ifdef CONFIG_BT_CSR_7820
+#define ALRAN
+#endif
+#ifdef ALRAN
+#include <linux/sched.h>
+#define MAX_KERNEL_IRQ_LOGS	(2000)
+
+struct ScheduleLogData {
+	ktime_t time;
+	unsigned int unPid;
+	unsigned long isr_status;
+	unsigned long sr_status;
+};
+
+static struct ScheduleLogData pHSLogData[MAX_KERNEL_IRQ_LOGS];
+static int nNextLogIdx;
+#endif
+
 static int hs_serial_debug_mask = 1;
 module_param_named(debug_mask, hs_serial_debug_mask,
 		   int, S_IRUGO | S_IWUSR | S_IWGRP);
@@ -158,6 +176,10 @@ struct msm_hs_port {
 	int dma_rx_crci;
 	struct hrtimer clk_off_timer;  /* to poll TXEMT before clock off */
 	ktime_t clk_off_delay;
+#ifdef ALRAN
+	struct hrtimer qtest_timer;  /* test force clock on & off */
+	ktime_t qtest_delay;
+#endif
 	enum msm_hs_clk_states_e clk_state;
 	enum msm_hs_clk_req_off_state_e clk_req_off_state;
 
@@ -792,6 +814,13 @@ unsigned int msm_hs_tx_empty(struct uart_port *uport)
 	if (data & UARTDM_SR_TXEMT_BMSK)
 		ret = TIOCSER_TEMT;
 
+#ifdef CONFIG_BT_CSR_7820
+	if (ret == TIOCSER_TEMT && (data & UARTDM_SR_RXRDY_BMSK) == 0)
+		ret = TIOCSER_TEMT;
+	else
+		ret = 0;
+#endif
+
 	return ret;
 }
 EXPORT_SYMBOL(msm_hs_tx_empty);
@@ -1399,10 +1428,98 @@ static enum hrtimer_restart msm_hs_clk_off_retry(struct hrtimer *timer)
 	return HRTIMER_NORESTART;
 }
 
+#ifdef ALRAN
+
+#define OVERRUN_CNT 50
+#define OVERRUN_DELAY 100000000 /* 100ms */
+
+static int u_overrun_cnt;
+static int buf_overrun;
+
+void u_overrun_clock_off(struct uart_port *uport)
+{
+	struct msm_hs_port *msm_uport = UARTDM_TO_MSM(uport);
+	unsigned long flags;
+
+	spin_lock_irqsave(&uport->lock, flags);
+
+	/* Stop RX & TX */
+	msm_hs_stop_rx_locked(uport);
+	msm_hs_stop_tx_locked(uport);
+
+	/* we really want to clock off */
+	clk_disable(msm_uport->clk);
+
+	if (msm_uport->pclk)
+		clk_disable(msm_uport->pclk);
+
+	msm_uport->clk_state = MSM_HS_CLK_OFF;
+
+	/*calling u_overrun_clock_on() after 100ms*/
+
+	hrtimer_start(&msm_uport->qtest_timer,
+			  msm_uport->qtest_delay,
+			  HRTIMER_MODE_REL);
+
+	u_overrun_cnt++;
+	pr_err("NEOBT u_overrun_cnt: %d\n", u_overrun_cnt);
+
+	spin_unlock_irqrestore(&uport->lock, flags);
+}
+
+static enum hrtimer_restart u_overrun_clock_on(struct hrtimer *timer)
+{
+	struct msm_hs_port *msm_uport = container_of(timer, struct msm_hs_port,
+						     qtest_timer);
+	struct uart_port *uport = &msm_uport->uport;
+	unsigned long flags;
+	unsigned int data;
+	int ret = HRTIMER_NORESTART;
+
+	spin_lock_irqsave(&uport->lock, flags);
+
+	/* Start TX */
+	msm_hs_start_tx_locked(uport);
+	clk_enable(msm_uport->clk);
+
+	if (msm_uport->pclk)
+		ret = clk_enable(msm_uport->pclk);
+
+	if (unlikely(ret)) {
+		dev_err(uport->dev, "Clock ON Failure"
+			"Stalling HSUART\n");
+		hrtimer_forward_now(timer, msm_uport->qtest_delay);
+		return HRTIMER_RESTART;
+	}
+
+	/* Start RX */
+	if (msm_uport->rx.flush == FLUSH_STOP ||
+		msm_uport->rx.flush == FLUSH_SHUTDOWN) {
+		msm_hs_write(uport, UARTDM_CR_ADDR, RESET_RX);
+		data = msm_hs_read(uport, UARTDM_DMEN_ADDR);
+		data |= UARTDM_RX_DM_EN_BMSK;
+		msm_hs_write(uport, UARTDM_DMEN_ADDR, data);
+		/* Complete above device write. Hence mb() here. */
+		mb();
+	}
+
+	msm_hs_start_rx_locked(uport);
+
+	if (msm_uport->rx.flush == FLUSH_STOP)
+		msm_uport->rx.flush = FLUSH_IGNORE;
+	msm_uport->clk_state = MSM_HS_CLK_ON;
+	spin_unlock_irqrestore(&uport->lock, flags);
+	return ret;
+}
+#endif
+
 static irqreturn_t msm_hs_isr(int irq, void *dev)
 {
 	unsigned long flags;
 	unsigned long isr_status;
+#ifdef ALRAN
+	unsigned long sr_status;
+#endif
 	struct msm_hs_port *msm_uport = (struct msm_hs_port *)dev;
 	struct uart_port *uport = &msm_uport->uport;
 	struct circ_buf *tx_buf = &uport->state->xmit;
@@ -1412,6 +1529,38 @@ static irqreturn_t msm_hs_isr(int irq, void *dev)
 	spin_lock_irqsave(&uport->lock, flags);
 
 	isr_status = msm_hs_read(uport, UARTDM_MISR_ADDR);
+
+#ifdef ALRAN
+	pHSLogData[nNextLogIdx].time = ktime_get();
+	pHSLogData[nNextLogIdx].unPid = current->pid;
+	pHSLogData[nNextLogIdx].isr_status = isr_status;
+	sr_status = msm_hs_read(uport, UARTDM_SR_ADDR);
+	pHSLogData[nNextLogIdx].sr_status = sr_status;
+
+	/* extra check for spurious msm_hs_isr */
+	if(!isr_status) {
+		pr_err("%s(): try to unlock msm_hs_isr", __func__);
+		spin_unlock_irqrestore(&uport->lock, flags);
+		return IRQ_HANDLED;
+	}
+
+	/*Adding this line for using overrun workaround*/
+	if (sr_status & UARTDM_SR_OVERRUN_BMSK) {
+		buf_overrun++;
+
+		if (buf_overrun == OVERRUN_CNT) {
+			buf_overrun = 0;
+			u_overrun_clock_off(uport);
+			spin_unlock_irqrestore(&uport->lock, flags);
+			return IRQ_HANDLED;
+		}
+	}
+
+	nNextLogIdx++;
+	if (nNextLogIdx == MAX_KERNEL_IRQ_LOGS)
+		nNextLogIdx = 0;
+	pHSLogData[nNextLogIdx].unPid = 0xAAAAAAAA;
+#endif
 
 	/* Uart RX starting */
 	if (isr_status & UARTDM_ISR_RXLEV_BMSK) {
@@ -1740,6 +1889,11 @@ static int msm_hs_startup(struct uart_port *uport)
 		dev_err(uport->dev, "set active error:%d\n", ret);
 	pm_runtime_enable(uport->dev);
 
+#ifdef CONFIG_BT_CSR_7820
+	/* Temp. patch for Bluetooth hci timeout */
+	pm_runtime_get_sync(uport->dev);
+#endif
+
 	return 0;
 
 free_uart_irq:
@@ -2009,6 +2163,13 @@ static int __devinit msm_hs_probe(struct platform_device *pdev)
 	msm_uport->clk_off_timer.function = msm_hs_clk_off_retry;
 	msm_uport->clk_off_delay = ktime_set(0, 1000000);  /* 1ms */
 
+#ifdef ALRAN
+	hrtimer_init(&msm_uport->qtest_timer, CLOCK_MONOTONIC,
+		     HRTIMER_MODE_REL);
+	msm_uport->qtest_timer.function = u_overrun_clock_on;
+	msm_uport->qtest_delay = ktime_set(0, OVERRUN_DELAY);  /* 100ms */
+#endif
+
 	ret = sysfs_create_file(&pdev->dev.kobj, &dev_attr_clock.attr);
 	if (unlikely(ret))
 		return ret;
@@ -2087,9 +2248,19 @@ static void msm_hs_shutdown(struct uart_port *uport)
 	wait_event(msm_uport->rx.wait, msm_uport->rx.flush == FLUSH_SHUTDOWN);
 	tasklet_kill(&msm_uport->rx.tlet);
 	cancel_delayed_work_sync(&msm_uport->rx.flip_insert_work);
+#ifdef CONFIG_BT_CSR_7820
+	/* Moved free irq on top of shutdown because of deadlock issue */
+	/* Free the interrupt */
+	free_irq(uport->irq, msm_uport);
+#endif
 	flush_workqueue(msm_uport->hsuart_wq);
 	pm_runtime_disable(uport->dev);
 	pm_runtime_set_suspended(uport->dev);
+
+#ifdef CONFIG_BT_CSR_7820
+	/* Temp. patch for Bluetooth hci timeout */
+	pm_runtime_put_sync(uport->dev);
+#endif
 
 	/* Disable the transmitter */
 	msm_hs_write(uport, UARTDM_CR_ADDR, UARTDM_CR_TX_DISABLE_BMSK);
@@ -2118,8 +2289,11 @@ static void msm_hs_shutdown(struct uart_port *uport)
 	if (use_low_power_wakeup(msm_uport))
 		irq_set_irq_wake(msm_uport->wakeup.irq, 0);
 
+#ifndef CONFIG_BT_CSR_7820
 	/* Free the interrupt */
 	free_irq(uport->irq, msm_uport);
+#endif
+
 	if (use_low_power_wakeup(msm_uport))
 		free_irq(msm_uport->wakeup.irq, msm_uport);
 	mutex_destroy(&msm_uport->clk_mutex);

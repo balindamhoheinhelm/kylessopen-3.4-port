@@ -1,0 +1,15 @@
+--- drivers/usb/otg/Kconfig	2013-04-19 11:37:14.000000000 +0200
++++ drivers/usb/otg/Kconfig	2014-08-29 08:16:34.836241000 +0200
+@@ -176,6 +176,12 @@
+           Enable this to support the USB OTG transceiver in AB8500 chip.
+           This transceiver supports high and full speed devices plus,
+           in host mode, low speed.
++	  
++config USB_RECEIVER_SENSITIVITY
++	boolean "Support USB receiver sensitivity"
++	depends on USB_ANDROID
++	help
++	  Adjust USB receiver sensitivity squelch.
+ 
+ config FSL_USB2_OTG
+ 	bool "Freescale USB OTG Transceiver Driver"

@@ -1,6 +1,6 @@
 /*
    BlueZ - Bluetooth protocol stack for Linux
-   Copyright (c) 2000-2001, 2011, Code Aurora Forum. All rights reserved.
+   Copyright (c) 2000-2001, 2011, The Linux Foundation. All rights reserved.
 
    Written 2000,2001 by Maxim Krasnyansky <maxk@qualcomm.com>
 
@@ -498,8 +498,6 @@ static int hci_sock_recvmsg(struct kiocb *iocb, struct socket *sock,
 	skb = skb_recv_datagram(sk, flags, noblock, &err);
 	if (!skb)
 		return err;
-
-	msg->msg_namelen = 0;
 
 	copied = skb->len;
 	if (len < copied) {

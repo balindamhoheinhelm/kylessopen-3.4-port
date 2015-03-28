@@ -48,7 +48,7 @@ static int pmem_fixup_high_low(unsigned short *high,
 {
 	void *phys_addr;
 	unsigned long phys_size;
-	unsigned long kvaddr;
+	unsigned long kvaddr = 0;
 
 	phys_addr = high_low_short_to_ptr(*high, *low);
 	phys_size = (unsigned long)high_low_short_to_ptr(size_high, size_low);

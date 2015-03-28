@@ -1,0 +1,16 @@
+--- fs/ecryptfs/ecryptfs_kernel.h	2013-04-19 11:37:14.000000000 +0200
++++ fs/ecryptfs/ecryptfs_kernel.h	2014-08-29 08:16:35.348241000 +0200
+@@ -37,6 +37,13 @@
+ #include <linux/nsproxy.h>
+ #include <linux/backing-dev.h>
+ 
++#ifdef CONFIG_WTL_ENCRYPTION_FILTER
++#define ENC_NAME_FILTER_MAX_INSTANCE 5
++#define ENC_NAME_FILTER_MAX_LEN (256*5)
++#define ENC_EXT_FILTER_MAX_INSTANCE 60
++#define ENC_EXT_FILTER_MAX_LEN 16
++#endif
++
+ /* Version verification for shared data structures w/ userspace */
+ #define ECRYPTFS_VERSION_MAJOR 0x00
+ #define ECRYPTFS_VERSION_MINOR 0x04

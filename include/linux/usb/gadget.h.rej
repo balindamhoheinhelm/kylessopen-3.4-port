@@ -1,0 +1,12 @@
+--- include/linux/usb/gadget.h	2013-04-19 11:37:14.000000000 +0200
++++ include/linux/usb/gadget.h	2014-08-29 08:16:36.076241000 +0200
+@@ -431,6 +431,9 @@
+ 	int	(*pullup) (struct usb_gadget *, int is_on);
+ 	int	(*ioctl)(struct usb_gadget *,
+ 				unsigned code, unsigned long param);
++#ifdef CONFIG_USB_MSM_72K
++	int    (*get_vbus_state)(struct usb_gadget *);
++#endif 
+ };
+ 
+ /**

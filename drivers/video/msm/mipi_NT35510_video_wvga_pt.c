@@ -97,7 +97,7 @@ static int mipi_video_nt35510_wvga_pt_init(void)
 	pinfo.mipi.tx_eot_append = 0x01;
 
 	ret = mipi_nt35510_device_register(&pinfo, MIPI_DSI_PRIM,
-						MIPI_DSI_PANEL_WVGA_PT);
+						MIPI_DSI_PANEL_WVGA_PT, 0, 0);
 
 	if (ret)
 		pr_err("%s: failed to register device!\n", __func__);

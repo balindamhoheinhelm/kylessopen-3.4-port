@@ -112,9 +112,13 @@ int mdp_lcdc_on(struct platform_device *pdev)
 	bpp = fbi->var.bits_per_pixel / 8;
 	buf = (uint8 *) fbi->fix.smem_start;
 
+#if defined(CONFIG_MACH_AMAZING_CDMA)
+	dma2_cfg_reg = DMA_PACK_ALIGN_LSB | DMA_DITHER_EN |
+		DMA_OUT_SEL_LCDC; /* sjlee_0223 (enable dithering) */
+#else
 	buf += calc_fb_offset(mfd, fbi, bpp);
-
 	dma2_cfg_reg = DMA_PACK_ALIGN_LSB | DMA_OUT_SEL_LCDC;
+#endif
 
 	if (mfd->fb_imgType == MDP_BGR_565)
 		dma2_cfg_reg |= DMA_PACK_PATTERN_BGR;
@@ -199,15 +203,17 @@ int mdp_lcdc_on(struct platform_device *pdev)
 	hsync_start_x = hsync_pulse_width + h_back_porch;
 	hsync_end_x = hsync_period - h_front_porch - 1;
 	display_hctl = (hsync_end_x << 16) | hsync_start_x;
-
-	vsync_period =
+    /*back vsync_period, display_v_end-daesu.jeong 12.02.20*/
+    vsync_period =
 	    (vsync_pulse_width + v_back_porch + lcdc_height +
-	     v_front_porch) * hsync_period;
-	display_v_start =
-	    (vsync_pulse_width + v_back_porch) * hsync_period + lcdc_hsync_skew;
-	display_v_end =
-	    vsync_period - (v_front_porch * hsync_period) + lcdc_hsync_skew - 1;
+	     v_front_porch)* hsync_period;
 
+    display_v_start =
+	    (vsync_pulse_width + v_back_porch) * hsync_period +
+							lcdc_hsync_skew;
+
+    display_v_end =
+      vsync_period - (v_front_porch * hsync_period) + lcdc_hsync_skew - 1;
 	if (lcdc_width != var->xres) {
 		active_h_start = hsync_start_x + first_pixel_start_x;
 		active_h_end = active_h_start + var->xres - 1;
@@ -244,6 +250,10 @@ int mdp_lcdc_on(struct platform_device *pdev)
 	hsync_polarity = 0;
 	vsync_polarity = 0;
 #endif
+#if !defined(CONFIG_MACH_AMAZING_CDMA)
+	hsync_polarity = 1;
+	vsync_polarity = 1;
+#endif
 	data_en_polarity = 0;
 
 	ctrl_polarity =
@@ -251,7 +261,8 @@ int mdp_lcdc_on(struct platform_device *pdev)
 
 	MDP_OUTP(MDP_BASE + timer_base + 0x4, hsync_ctrl);
 	MDP_OUTP(MDP_BASE + timer_base + 0x8, vsync_period);
-	MDP_OUTP(MDP_BASE + timer_base + 0xc, vsync_pulse_width * hsync_period);
+	MDP_OUTP(MDP_BASE + timer_base + 0xc,
+					vsync_pulse_width * hsync_period);
 	if (timer_base == LCDC_BASE) {
 		MDP_OUTP(MDP_BASE + timer_base + 0x10, display_hctl);
 		MDP_OUTP(MDP_BASE + timer_base + 0x14, display_v_start);
@@ -276,12 +287,20 @@ int mdp_lcdc_on(struct platform_device *pdev)
 		MDP_OUTP(MDP_BASE + timer_base + 0x38, active_v_end);
 	}
 
+#if defined(CONFIG_MACH_AMAZING) || defined(CONFIG_MACH_AMAZING_CDMA)
+  /* enable LCDC block */
+	MDP_OUTP(MDP_BASE + timer_base, 1);
+	mdp_pipe_ctrl(block, MDP_BLOCK_POWER_ON, FALSE);
+	ret = panel_next_on(pdev);
+#else
 	ret = panel_next_on(pdev);
 	if (ret == 0) {
 		/* enable LCDC block */
 		MDP_OUTP(MDP_BASE + timer_base, 1);
 		mdp_pipe_ctrl(block, MDP_BLOCK_POWER_ON, FALSE);
 	}
+#endif
+
 	/* MDP cmd block disable */
 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
 

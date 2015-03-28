@@ -1,0 +1,22 @@
+--- arch/arm/mach-msm/smd.c	2013-04-19 11:37:14.000000000 +0200
++++ arch/arm/mach-msm/smd.c	2014-08-29 08:20:15.300248000 +0200
+@@ -998,9 +999,16 @@
+ 		ch->send->fCTS = 1;
+ 		ch->send->fCD = 1;
+ 	} else {
+-		ch->send->fDSR = 0;
+-		ch->send->fCTS = 0;
+-		ch->send->fCD = 0;
++    //ALRAN 
++    if (strncmp("DATA5", ch->name, 5) && strncmp("DATA6", ch->name, 5) && 
++    strncmp("DATA7", ch->name, 5)) { //DATA5,6,7 and DATA5,6,7_CTRL 
++        ch->send->fDSR = 0; 
++        ch->send->fCTS = 0; 
++        ch->send->fCD = 0; 
++        pr_err("!!! SMD drop DTR [%s] from %d %s\n", ch->name, current->pid, current->comm); 
++    } 
++    pr_err("!!! SMD drop discard DTR [%s] from %d %s\n", ch->name, current->pid, current->comm); 
++    ////// 
+ 	}
+ 	ch->send->state = n;
+ 	ch->send->fSTATE = 1;

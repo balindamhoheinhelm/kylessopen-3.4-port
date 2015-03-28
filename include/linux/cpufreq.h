@@ -345,6 +345,63 @@ static inline unsigned int cpufreq_quick_get_max(unsigned int cpu)
 }
 #endif
 
+#ifdef CONFIG_SEC_DVFS
+enum {
+	BOOT_CPU = 0,
+	NON_BOOT_CPU = 1
+};
+
+#ifdef CONFIG_MACH_AMAZING
+
+#define MAX_FREQ_LIMIT		800000
+#define MIN_FREQ_LIMIT		122880
+#define MAX_TOUCH_LIMIT		600000
+#define MAX_UNICPU_LIMIT	600000
+
+#elif defined(CONFIG_MACH_KYLE)
+
+#define MAX_FREQ_LIMIT		1008000
+#define MIN_FREQ_LIMIT		122880
+#define MAX_TOUCH_LIMIT		600000
+#define MAX_UNICPU_LIMIT	600000
+
+#else	/* default */
+
+#define MAX_FREQ_LIMIT		800000
+#define MIN_FREQ_LIMIT		122880
+#define MAX_TOUCH_LIMIT		600000
+#define MAX_UNICPU_LIMIT	600000
+
+#endif
+
+#define UPDATE_NOW_BITS		0xFF
+
+enum {
+	DVFS_NO_ID = 0,
+
+	/* need to update now */
+	DVFS_TOUCH_ID = 0x00000001,
+	DVFS_APPS_MIN_ID = 0x00000002,
+	DVFS_APPS_MAX_ID = 0x00000004,
+	DVFS_UNICPU_ID = 0x00000008,
+
+	/* DO NOT UPDATE NOW */
+	DVFS_THERMALD_ID = 0x00000100,
+
+	DVFS_MAX_ID
+};
+
+#ifdef CONFIG_SEC_DVFS_DUAL
+void dual_boost(unsigned int boost_on);
+#endif
+
+int set_freq_limit(unsigned long id, unsigned int freq);
+
+unsigned int get_min_lock(void);
+unsigned int get_max_lock(void);
+void set_min_lock(int freq);
+void set_max_lock(int freq);
+#endif
 
 /*********************************************************************
  *                       CPUFREQ DEFAULT GOVERNOR                    *

@@ -138,6 +138,32 @@ static void power_supply_changed_work(struct work_struct *work)
 	spin_unlock_irqrestore(&psy->changed_lock, flags);
 }
 
+static void power_supply_changed_direct(struct power_supply *psy)
+{
+	unsigned long flags;
+
+	printk(KERN_ERR "%s enter.\n", __func__);
+
+	spin_lock_irqsave(&psy->changed_lock, flags);
+	if (psy->changed) {
+		psy->changed = false;
+		spin_unlock_irqrestore(&psy->changed_lock, flags);
+
+		class_for_each_device(power_supply_class, NULL, psy,
+				      __power_supply_changed_work);
+
+		power_supply_update_leds(psy);
+
+		kobject_uevent(&psy->dev->kobj, KOBJ_CHANGE);
+		spin_lock_irqsave(&psy->changed_lock, flags);
+	}
+	if (!psy->changed)
+		wake_unlock(&psy->work_wake_lock);
+	spin_unlock_irqrestore(&psy->changed_lock, flags);
+
+	printk(KERN_ERR "%s exit.\n", __func__);
+}
+
 void power_supply_changed(struct power_supply *psy)
 {
 	unsigned long flags;
@@ -148,7 +174,11 @@ void power_supply_changed(struct power_supply *psy)
 	psy->changed = true;
 	wake_lock(&psy->work_wake_lock);
 	spin_unlock_irqrestore(&psy->changed_lock, flags);
+#ifdef CONFIG_MACH_KYLE
+	power_supply_changed_direct(psy);
+#else
 	schedule_work(&psy->changed_work);
+#endif
 }
 EXPORT_SYMBOL_GPL(power_supply_changed);
 

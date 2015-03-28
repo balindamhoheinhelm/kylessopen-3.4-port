@@ -209,6 +209,13 @@ repeat:
 		if (!new_transaction)
 			goto alloc_transaction;
 		write_lock(&journal->j_state_lock);
+		/* sangwoo2.lee, between previous 'write_lock' and
+		   'read_unlock', j_barrier_count could be set */
+		if (journal->j_barrier_count) {
+			write_unlock(&journal->j_state_lock);
+			goto repeat;
+		}
+
 		if (!journal->j_running_transaction) {
 			jbd2_get_transaction(journal, new_transaction);
 			new_transaction = NULL;

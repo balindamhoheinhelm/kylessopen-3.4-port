@@ -1,0 +1,48 @@
+--- drivers/tty/serial/msm_serial_hs.c	2013-04-19 11:37:14.000000000 +0200
++++ drivers/tty/serial/msm_serial_hs.c	2014-08-29 08:20:15.308248000 +0200
+@@ -808,6 +830,13 @@
+ 	if (data & UARTDM_SR_TXEMT_BMSK)
+ 		ret = TIOCSER_TEMT;
+ 
++#ifdef CONFIG_BT_CSR_7820
++	if (ret == TIOCSER_TEMT && (data & UARTDM_SR_RXRDY_BMSK) == 0)
++		ret = TIOCSER_TEMT;
++	else
++		ret = 0;
++#endif
++
+ 	clk_disable(msm_uport->clk);
+ 
+ 	return ret;
+@@ -1851,6 +2000,10 @@
+ 		dev_err(uport->dev, "set active error:%d\n", ret);
+ 	pm_runtime_enable(uport->dev);
+ 
++#ifdef CONFIG_BT_CSR_7820
++	/* Temp. patch for Bluetooth hci timeout */
++	pm_runtime_get_sync(uport->dev);
++#endif
+ 
+ 	return 0;
+ }
+@@ -2148,10 +2308,20 @@
+ 	tasklet_kill(&msm_uport->rx.tlet);
+ 	cancel_delayed_work_sync(&msm_uport->rx.flip_insert_work);
+ 
++#ifdef CONFIG_BT_CSR_7820
++	/* Moved free irq on top of shutdown because of deadlock issue */
++	/* Free the interrupt */
++	free_irq(uport->irq, msm_uport);
++#endif
++
+ 	clk_enable(msm_uport->clk);
+ 
+ 	pm_runtime_disable(uport->dev);
+ 	pm_runtime_set_suspended(uport->dev);
++#ifdef CONFIG_BT_CSR_7820
++	/* Temp. patch for Bluetooth hci timeout */
++	pm_runtime_put_sync(uport->dev);
++#endif
+ 
+ 	spin_lock_irqsave(&uport->lock, flags);
+ 	/* Disable the transmitter */

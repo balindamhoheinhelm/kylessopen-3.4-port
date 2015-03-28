@@ -1,0 +1,32 @@
+--- arch/arm/kernel/irq.c	2014-08-29 08:16:09.392240000 +0200
++++ arch/arm/kernel/irq.c	2013-04-19 11:37:14.000000000 +0200
+@@ -43,7 +43,6 @@
+ #include <asm/mach/time.h>
+ 
+ #include <asm/perftypes.h>
+-#include <linux/sec_debug.h>
+ 
+ /*
+  * No architecture-specific irq_finish function defined in arm/arch/irqs.h.
+@@ -76,11 +75,6 @@
+ {
+ 	struct pt_regs *old_regs = set_irq_regs(regs);
+ 
+-#ifdef CONFIG_SEC_DEBUG_IRQ_EXIT_LOG
+-	int cpu = smp_processor_id();
+-	unsigned long long start_time = cpu_clock(cpu);
+-#endif /* CONFIG_SEC_DEBUG_IRQ_EXIT_LOG */
+-
+ 	perf_mon_interrupt_in();
+ 	irq_enter();
+ 
+@@ -100,9 +94,6 @@
+ 	irq_finish(irq);
+ 
+ 	irq_exit();
+-#ifdef CONFIG_SEC_DEBUG_IRQ_EXIT_LOG
+-	sec_debug_irq_enterexit_log(irq, start_time);
+-#endif /* CONFIG_SEC_DEBUG_IRQ_EXIT_LOG */
+ 	set_irq_regs(old_regs);
+ 	perf_mon_interrupt_out();
+ }

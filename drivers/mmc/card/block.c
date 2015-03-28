@@ -309,7 +309,6 @@ static int mmc_blk_open(struct block_device *bdev, fmode_t mode)
 {
 	struct mmc_blk_data *md = mmc_blk_get(bdev->bd_disk);
 	int ret = -ENXIO;
-
 	mutex_lock(&block_mutex);
 	if (md) {
 		if (md->usage == 2)
@@ -2053,7 +2052,9 @@ static struct mmc_blk_data *mmc_blk_alloc_req(struct mmc_card *card,
 
 	ret = mmc_init_queue(&md->queue, card, &md->lock, subname);
 	if (ret)
+     {
 		goto err_putdisk;
+     }  
 
 	md->queue.issue_fn = mmc_blk_issue_rq;
 	md->queue.data = md;
@@ -2081,7 +2082,7 @@ static struct mmc_blk_data *mmc_blk_alloc_req(struct mmc_card *card,
 
 	snprintf(md->disk->disk_name, sizeof(md->disk->disk_name),
 		 "mmcblk%d%s", md->name_idx, subname ? subname : "");
-
+		 
 	blk_queue_logical_block_size(md->queue.queue, 512);
 	set_capacity(md->disk, size);
 
@@ -2457,7 +2458,6 @@ static int __init mmc_blk_init(void)
 	res = mmc_register_driver(&mmc_driver);
 	if (res)
 		goto out2;
-
 	return 0;
  out2:
 	unregister_blkdev(MMC_BLOCK_MAJOR, "mmc");

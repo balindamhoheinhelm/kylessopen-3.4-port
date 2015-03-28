@@ -32,6 +32,7 @@
 #include <mach/msm_iomap.h>
 #include <mach/irqs.h>
 #include <mach/socinfo.h>
+#include <linux/sec_debug.h>
 
 #if defined(CONFIG_MSM_SMD)
 #include "smd_private.h"
@@ -202,6 +203,9 @@ static irqreturn_t msm_timer_interrupt(int irq, void *dev_id)
 	if (evt->event_handler == NULL)
 		return IRQ_HANDLED;
 	evt->event_handler(evt);
+#ifdef CONFIG_SEC_DEBUG_SCHED_LOG
+	sec_debug_timer_log(2222, (int)irqs_disabled(),	(void *)evt->event_handler);
+#endif /* CONFIG_SEC_DEBUG_SCHED_LOG */
 	return IRQ_HANDLED;
 }
 
@@ -781,8 +785,6 @@ int64_t msm_timer_enter_idle(void)
 		msm_timer_sync_to_gpt(clock, 0);
 
 	count = msm_read_timer_count(clock, LOCAL_TIMER);
-	if (clock_state->stopped++ == 0)
-		clock_state->stopped_tick = count + clock_state->sleep_offset;
 	alarm = clock_state->alarm;
 	delta = alarm - count;
 	if (delta <= -(int32_t)((clock->freq << clock->shift) >> 10)) {
@@ -791,6 +793,8 @@ int64_t msm_timer_enter_idle(void)
 			"reprogram it\n", delta);
 		msm_timer_reactivate_alarm(clock);
 	}
+	if (clock_state->stopped++ == 0)
+		clock_state->stopped_tick = count + clock_state->sleep_offset;
 	if (delta <= 0)
 		return 0;
 	return clocksource_cyc2ns((alarm - count) >> clock->shift,

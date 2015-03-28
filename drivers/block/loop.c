@@ -1278,7 +1278,6 @@ static int lo_ioctl(struct block_device *bdev, fmode_t mode,
 {
 	struct loop_device *lo = bdev->bd_disk->private_data;
 	int err;
-
 	mutex_lock_nested(&lo->lo_ctl_mutex, 1);
 	switch (cmd) {
 	case LOOP_SET_FD:
@@ -1323,6 +1322,7 @@ static int lo_ioctl(struct block_device *bdev, fmode_t mode,
 
 out_unlocked:
 	return err;
+
 }
 
 #ifdef CONFIG_COMPAT

@@ -485,6 +485,51 @@ config TOUCHSCREEN_SYNAPTICS_RMI4_I2C
 	help
 	  This enables support for Synaptics RMI over I2C based touchscreens(ClearPad 3000).
 
+
+config TOUCHSCREEN_ZINITIX
+	tristate "Zinitix i2c touchscreen"
+	depends on I2C
+	help
+		This enable support for Zinitix over I2C based touchscreen.
+
+config TOUCHSCREEN_ZINITIX_AMAZING
+        tristate "Zinitix i2c touchscreen"
+        depends on I2C
+        help
+                This enable support for Zinitix over I2C based touchscreen.
+config TOUCHSCREEN_ZINITIX_TREBON
+	tristate "Zinitix i2c touchscreen"
+	depends on I2C
+	help
+		This enable support for Zinitix over I2C based touchscreen.
+
+config TOUCHSCREEN_ZINITIX_GEIM
+	tristate "Zinitix i2c touchscreen"
+	depends on I2C
+	help
+		This enable support for Zinitix over I2C based touchscreen.		
+
+config TOUCHSCREEN_MELFAS_TS
+        bool "Melfas Touchscreen interface support"
+        depends on I2C
+        help
+      Say Y here to enable support for the Melfas
+          touchscreen controller.
+
+config TOUCHSCREEN_MELFAS_KYLE
+	tristate "Melfas i2c touchscreen"
+	depends on I2C
+	help
+		This enable support for Melfas over I2C based touchscreen.
+
+
+config TOUCHSCREEN_MELFAS_FIRMWARE_UPDATE
+    bool "melfas touchscreen firmware update"
+        depends on TOUCHSCREEN_MELFAS || TOUCHSCREEN_MELFAS_TS
+        help
+          Say Y here to enable the touchscreen firmware update.
+
+
 config SYNA_MULTI_TOUCH
 	tristate "Synaptics i2c touchscreen(ClearPad 3000) MutilTouch support"
 	depends on TOUCHSCREEN_SYNAPTICS_RMI4_I2C

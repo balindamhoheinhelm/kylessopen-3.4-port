@@ -124,6 +124,8 @@ obj-y += mipi_toshiba_video_wvga_pt.o mipi_toshiba_video_wsvga_pt.o mipi_toshiba
 obj-y += mipi_novatek_video_qhd_pt.o mipi_novatek_cmd_qhd_pt.o
 obj-y += mipi_orise_video_720p_pt.o mipi_orise_cmd_720p_pt.o
 obj-y += mipi_renesas_video_fwvga_pt.o mipi_renesas_cmd_fwvga_pt.o
+obj-y += mipi_NT35510_video_hydis_wvga_pt.o mipi_NT35510_cmd_hydis_wvga_pt.o
+obj-y += mipi_NT35510_cmd_boe_wvga_pt.o
 obj-y += mipi_NT35510_video_wvga_pt.o mipi_NT35510_cmd_wvga_pt.o
 obj-y += mipi_truly_tft540960_1_e_video_qhd_pt.o mipi_truly_tft540960_1_e_cmd_qhd_pt.o
 obj-y += mipi_chimei_wxga_pt.o
@@ -141,6 +143,9 @@ obj-$(CONFIG_FB_MSM_MIPI_RENESAS_VIDEO_FWVGA_PT) += mipi_renesas_video_fwvga_pt.
 obj-$(CONFIG_FB_MSM_MIPI_RENESAS_CMD_FWVGA_PT) += mipi_renesas_cmd_fwvga_pt.o
 obj-$(CONFIG_FB_MSM_MIPI_RENESAS_VIDEO_FWVGA_PT) += mipi_renesas_video_fwvga_pt.o
 obj-$(CONFIG_FB_MSM_MIPI_TRULY_VIDEO_WVGA_PT) += mipi_truly_video_wvga_pt.o
+obj-$(CONFIG_FB_MSM_MIPI_NT35510_CMD_HYDIS_WVGA_PT) += mipi_NT35510_cmd_hydis_wvga_pt.o
+obj-$(CONFIG_FB_MSM_MIPI_NT35510_VIDEO_HYDIS_WVGA_PT) += mipi_NT35510_video_hydis_wvga_pt.o
+obj-$(CONFIG_FB_MSM_MIPI_NT35510_CMD_BOE_WVGA_PT) += mipi_NT35510_cmd_boe_wvga_pt.o
 obj-$(CONFIG_FB_MSM_MIPI_NT35510_CMD_WVGA_PT) += mipi_NT35510_cmd_wvga_pt.o
 obj-$(CONFIG_FB_MSM_MIPI_NT35510_VIDEO_WVGA_PT) += mipi_NT35510_video_wvga_pt.o
 obj-$(CONFIG_FB_MSM_MIPI_NT35516_CMD_QHD_PT) += mipi_truly_tft540960_1_e_cmd_qhd_pt.o
@@ -169,8 +174,20 @@ obj-$(CONFIG_FB_MSM_LCDC_ST15_WXGA) += lcdc_st15.o
 obj-$(CONFIG_FB_MSM_LVDS_CHIMEI_WXGA) += lvds_chimei_wxga.o
 obj-$(CONFIG_FB_MSM_LVDS_FRC_FHD) += lvds_frc_fhd.o
 obj-$(CONFIG_FB_MSM_HDMI_MSM_PANEL) += hdmi_msm.o
+obj-$(CONFIG_FB_MSM_LCDC_QRDC_WXGA) += lcdc_qrdc.o
 obj-$(CONFIG_FB_MSM_EXT_INTERFACE_COMMON) += external_common.o
 obj-$(CONFIG_FB_MSM_LCDC_TRULY_HVGA_IPS3P2335) += lcdc_truly_ips3p2335.o
+
+
+##################################
+# Lcd driver for Samsung Project #
+##################################
+obj-$(CONFIG_FB_MSM_LCDC_S6D16A0X_HVGA) += lcdc_s6d05a1x01.o lcdc_s6d_backlight.o
+obj-$(CONFIG_FB_MSM_LCDC_TREBON_HVGA) += lcdc_trebon.o lcdc_backlight_ic.o 
+obj-$(CONFIG_FB_MSM_LCDC_TREBON_HVGA) += lcdc_s6d16a0x_jena.c lcdc_backlight_ic.o 
+obj-$(CONFIG_FB_MSM_LCDC_GEIM_HVGA) += lcdc_geim.o lcdc_backlight_ic.o 
+obj-$(CONFIG_FB_MSM_LCDC_JENA_HVGA) += lcdc_jena.o lcdc_backlight_ic.o
+obj-$(CONFIG_FB_MSM_LCDC_AMAZING_HVGA) += lcdc_amazing.o lcdc_backlight_ic.o
 
 obj-$(CONFIG_FB_MSM_TVOUT) += tvout_msm.o
 

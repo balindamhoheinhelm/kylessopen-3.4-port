@@ -13,26 +13,33 @@
  * GNU General Public License for more details.
  */
 #include <linux/kernel.h>
+#include <linux/module.h>
 #include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/leds.h>
 
 #include <mach/pmic.h>
+#include <linux/gpio.h>
+//#define MAX_KEYPAD_BL_LEVEL	16
 
-#define MAX_KEYPAD_BL_LEVEL	16
+#if defined (CONFIG_MACH_AMAZING_CDMA)
+static unsigned char n_GPIO_KEY_LED_EN = 80;
+#else
+static unsigned char n_GPIO_KEY_LED_EN = 124;
+#endif
 
 static void msm_keypad_bl_led_set(struct led_classdev *led_cdev,
 	enum led_brightness value)
 {
-	int ret;
-
-	ret = pmic_set_led_intensity(LED_KEYPAD, value / MAX_KEYPAD_BL_LEVEL);
-	if (ret)
-		dev_err(led_cdev->dev, "can't set keypad backlight\n");
+	if (value)
+		gpio_set_value(n_GPIO_KEY_LED_EN, 1);
+	else
+		gpio_set_value(n_GPIO_KEY_LED_EN, 0);
+	
 }
 
 static struct led_classdev msm_kp_bl_led = {
-	.name			= "keyboard-backlight",
+	.name			= "button-backlight",			//"keyboard-backlight",
 	.brightness_set		= msm_keypad_bl_led_set,
 	.brightness		= LED_OFF,
 };
@@ -46,6 +53,9 @@ static int msm_pmic_led_probe(struct platform_device *pdev)
 		dev_err(&pdev->dev, "unable to register led class driver\n");
 		return rc;
 	}
+#if defined (CONFIG_MACH_AMAZING_CDMA)
+	gpio_tlmm_config(GPIO_CFG(80,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), GPIO_CFG_ENABLE);
+#endif
 	msm_keypad_bl_led_set(&msm_kp_bl_led, LED_OFF);
 	return rc;
 }
@@ -62,7 +72,6 @@ static int msm_pmic_led_suspend(struct platform_device *dev,
 		pm_message_t state)
 {
 	led_classdev_suspend(&msm_kp_bl_led);
-
 	return 0;
 }
 

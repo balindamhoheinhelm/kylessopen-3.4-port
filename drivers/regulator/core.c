@@ -30,6 +30,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/regulator/driver.h>
 #include <linux/regulator/machine.h>
+#include <linux/proc_fs.h>
 #include <linux/module.h>
 
 #define CREATE_TRACE_POINTS
@@ -2306,6 +2307,21 @@ out:
 	return ret;
 }
 
+static unsigned int __regulator_get_mode(struct regulator_dev *rdev)
+{
+	int ret;
+
+	/* sanity check */
+	if (!rdev->desc->ops->get_mode) {
+		ret = -EINVAL;
+		goto out;
+	}
+
+	ret = rdev->desc->ops->get_mode(rdev);
+out:
+	return ret;
+}
+
 /**
  * regulator_get_mode - get regulator operating mode
  * @regulator: regulator source
@@ -3056,6 +3072,64 @@ static int reg_debug_mode_get(void *data, u64 *val)
 DEFINE_SIMPLE_ATTRIBUTE(reg_mode_fops, reg_debug_mode_get,
 			reg_debug_mode_set, "%llu\n");
 
+void regulator_showall_enabled(void)
+{
+	struct regulator_dev *rdev;
+	unsigned int cnt = 0;
+	struct regulator *reg;
+	char *supply_name;
+
+	pr_info("Enabled regulators:\n");
+	/* XXX: mutex lock can't be used during suspending
+	mutex_lock(&regulator_list_mutex);
+	*/
+	list_for_each_entry(rdev, &regulator_list, list) {
+		/*
+		mutex_lock(&rdev->mutex);
+		*/
+		if (_regulator_is_enabled(rdev)) {
+			if (rdev->desc->ops) {
+				pr_info("  %s, %duV, 0x%x mode\n",
+						rdev_get_name(rdev),
+						_regulator_get_voltage(rdev),
+						__regulator_get_mode(rdev));
+
+				list_for_each_entry(reg,
+						&rdev->consumer_list, list) {
+					if (reg->supply_name)
+						supply_name = reg->supply_name;
+					else
+						supply_name = "(null)-(null)";
+
+					pr_info("%-32s %c   %8d %8d %8d\n",
+							supply_name,
+							(reg->enabled ?
+							 'Y' : 'N'),
+							reg->min_uV,
+							reg->max_uV,
+							reg->uA_load);
+				}
+			} else {
+				pr_info("  %s\n", rdev_get_name(rdev));
+			}
+			cnt++;
+		}
+		/*
+		mutex_unlock(&rdev->mutex);
+		*/
+	}
+	/*
+	mutex_unlock(&regulator_list_mutex);
+	*/
+
+	if (cnt)
+		pr_info("Enabled regulator count: %d\n", cnt);
+	else
+		pr_info("No regulators enabled.\n");
+
+	return;
+}
+
 static int reg_debug_optimum_mode_set(void *data, u64 val)
 {
 	int err_info;
@@ -3674,6 +3748,39 @@ static int __init regulator_init(void)
 /* init early to allow our consumers to complete system booting */
 core_initcall(regulator_init);
 
+static int regulator_stats_show(struct seq_file *m, void *unused)
+{
+	struct regulator_dev *rdev;
+
+	mutex_lock(&regulator_list_mutex);
+	list_for_each_entry(rdev, &regulator_list, list) {
+		mutex_lock(&rdev->mutex);
+		if (_regulator_is_enabled(rdev)) {
+			if (rdev->desc->ops)
+				seq_printf(m, "  %s, %duV, 0x%x mode\n",
+						rdev_get_name(rdev),
+						_regulator_get_voltage(rdev),
+						__regulator_get_mode(rdev));
+			else
+				seq_printf(m, "  %s\n", rdev_get_name(rdev));
+		}
+		mutex_unlock(&rdev->mutex);
+	}
+	mutex_unlock(&regulator_list_mutex);
+	return 0;
+}
+static int regulator_stats_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, regulator_stats_show, NULL);
+}
+
+static const struct file_operations regulator_stats_fops = {
+	.owner = THIS_MODULE,
+	.open = regulator_stats_open,
+	.read = seq_read,
+	.llseek = seq_lseek,
+	.release = single_release,
+};
 static int __init regulator_init_complete(void)
 {
 	struct regulator_dev *rdev;
@@ -3733,6 +3840,7 @@ unlock:
 	}
 
 	mutex_unlock(&regulator_list_mutex);
+	proc_create("regulator", S_IRUGO, NULL, &regulator_stats_fops);
 
 	return 0;
 }

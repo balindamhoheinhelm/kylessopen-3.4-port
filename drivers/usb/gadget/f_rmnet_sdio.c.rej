@@ -1,0 +1,42 @@
+--- drivers/usb/gadget/f_rmnet_sdio.c	2013-04-19 11:37:14.000000000 +0200
++++ drivers/usb/gadget/f_rmnet_sdio.c	2014-08-29 08:20:15.308248000 +0200
+@@ -1261,16 +1266,36 @@
+ 	int ret = 0;
+ 
+ 	dev->epin->driver_data = dev;
+-	usb_ep_enable(dev->epin, ep_choose(cdev->gadget,
++	ret = usb_ep_enable(dev->epin, ep_choose(cdev->gadget,
+ 				&rmnet_sdio_hs_in_desc,
+ 				&rmnet_sdio_fs_in_desc));
++	if (ret) {
++		ERROR(cdev, "can't enable %s, result %d\n",
++					dev->epin->name, ret);
++		return ret;
++	}
++
+ 	dev->epout->driver_data = dev;
+-	usb_ep_enable(dev->epout, ep_choose(cdev->gadget,
++	ret = usb_ep_enable(dev->epout, ep_choose(cdev->gadget,
+ 				&rmnet_sdio_hs_out_desc,
+ 				&rmnet_sdio_fs_out_desc));
+-	usb_ep_enable(dev->epnotify, ep_choose(cdev->gadget,
++	if (ret) {
++		ERROR(cdev, "can't enable %s, result %d\n",
++					dev->epout->name, ret);
++		usb_ep_disable(dev->epin);
++		return ret;
++	}
++
++	ret = usb_ep_enable(dev->epnotify, ep_choose(cdev->gadget,
+ 				&rmnet_sdio_hs_notify_desc,
+ 				&rmnet_sdio_fs_notify_desc));
++	if (ret) {
++		ERROR(cdev, "can't enable %s, result %d\n",
++					dev->epnotify->name, ret);
++		usb_ep_disable(dev->epin);
++		usb_ep_disable(dev->epout);
++		return ret;
++	}
+ 
+ 	/* allocate notification */
+ 	dev->notify_req = rmnet_sdio_alloc_req(dev->epnotify,

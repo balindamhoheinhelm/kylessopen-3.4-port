@@ -489,6 +489,69 @@ config MACH_MSM7X27A_FFA
         help
           Support for the Qualcomm MSM7x27A FFA.
 
+config MACH_TREBON
+        depends on ARCH_MSM7X27A
+        depends on !MSM_STACKED_MEMORY
+        default n
+        bool "MSM7x27A TREBON"
+        help
+          Support for the Qualcomm TREBON       
+
+config MACH_AMAZING
+        depends on !MSM_STACKED_MEMORY
+        default n
+        bool "MSM7x27A AMAZING"
+        help
+          Support for the Qualcomm AMAZING               
+	  
+config MACH_AMAZING_CDMA
+        depends on ARCH_MSM7X27A
+        depends on !MSM_STACKED_MEMORY
+        default n
+        bool "MSM7x27A AMAZING-CDMA"
+        help
+	  Support for the Qualcomm AMAZING-CDMA
+
+config MACH_KYLE
+        depends on !MSM_STACKED_MEMORY
+	select DISABLE_HDMI_FB_CLEAR
+        default n
+        bool "MSM7x27A KYLE"
+        help
+          Support for the Qualcomm KYLE
+
+config MACH_KYLE_CHN
+        depends on !MSM_STACKED_MEMORY
+	select DISABLE_HDMI_FB_CLEAR
+        default n
+        bool "MSM7x27A KYLE-CHN"
+        help
+          Support for the Qualcomm KYLE-CHN
+
+config MACH_KYLE_HKTW
+        depends on !MSM_STACKED_MEMORY
+	select DISABLE_HDMI_FB_CLEAR
+        default n
+        bool "MSM7x27A KYLE-HKTW"
+        help
+          Support for the Qualcomm KYLE-HKTW
+	  
+config MACH_KYLE_I
+        depends on !MSM_STACKED_MEMORY
+	select DISABLE_HDMI_FB_CLEAR
+        default n
+        bool "MSM7x27A KYLE-I"
+        help
+          Support for the Qualcomm KYLE-I
+
+config MACH_KYLE_I_CU
+        depends on !MSM_STACKED_MEMORY
+	select DISABLE_HDMI_FB_CLEAR
+        default n
+        bool "MSM7x27A KYLE-I-CU"
+        help
+          Support for the Qualcomm KYLE-I-CU
+
 config MACH_MSM7625A_SURF
         depends on ARCH_MSM7X27A
         depends on !MSM_STACKED_MEMORY
@@ -876,6 +939,20 @@ config MACH_FSM9XXX_SURF
 	  FFA board.
 
 endmenu
+
+config MACH_TREBON_HWREV
+        hex "MSM7x27A TREBON HWREV"
+		depends on MACH_TREBON
+		default "0x2"
+		help
+          Qualcomm TREBON H/W revision.
+
+config MACH_AMAZING_CDMA_HWREV
+        hex "MSM7x27A AMAZING-CDMA HWREV"
+               depends on MACH_AMAZING_CDMA
+               default "0x0"
+               help
+          Qualcomm AMAZING-CDMA H/W revision.
 
 config MSM_STACKED_MEMORY
 	bool "Stacked Memory"
@@ -2167,6 +2244,9 @@ config MSM_SHOW_RESUME_IRQ
 		the resume loop unrolls. Say Y if you want to debug why the system
 		resumed.
 
+config BT_CSR_7820
+	bool "CSR Bluetooth"
+
 config BT_MSM_PINTEST
 	tristate "MSM Bluetooth Pin Connectivity Test"
 	depends on ((ARCH_MSM8X60 || ARCH_MSM7X27A) && DEBUG_FS)
@@ -2289,6 +2369,20 @@ config MSM_OCMEM
 	  Enable support for On-Chip Memory available on certain MSM chipsets.
 	  OCMEM is a low latency, high performance pool shared by subsystems.
 
+config SEC_DEBUG_SCHED_LOG
+        default n
+        bool "Scheduler Log"
+
+config SEC_DEBUG_IRQ_EXIT_LOG
+        depends on SEC_DEBUG_SCHED_LOG
+        default n
+        bool "IRQ Log"
+
+config APPLY_GA_SOLUTION
+        default y
+        bool "MSM7x27A GetLog"
+        help
+
 config MSM_RTB
 	bool "Register tracing"
 	help
@@ -2316,6 +2410,31 @@ config MSM_EBI_ERP
 
 	  For production builds, you should probably say 'N' here.
 
+config SEC_MODEM_AMAZING
+	bool "Amazing with msm7x25a"
+	depends on SEC_MODEM
+	select LINK_DEVICE_DPRAM
+	select UMTS_MODEM_MSM7x27
+
+config SEC_MODEM_TREBON
+	bool "Trebon with msm7x27a"
+	depends on SEC_MODEM
+	select LINK_DEVICE_DPRAM
+	select UMTS_MODEM_MSM7x27
+
+config SEC_MODEM_AMAZING_CDMA
+        bool "Amazing-cdma with msm7x25a"
+        depends on SEC_MODEM
+        select LINK_DEVICE_DPRAM
+        select UMTS_MODEM_MSM7x27
+
+config DISABLE_FM_SUPPORT
+    bool "Disable FM support"
+        depends on MACH_AMAZING_CDMA
+    default y
+    help
+          Feature for disabling FM support
+	  
 config MSM_CACHE_ERP
 	bool "Cache / CPU error reporting"
 	depends on ARCH_MSM_KRAIT
@@ -2439,5 +2558,11 @@ config MSM_HSIC_SYSMON_TEST
 	  This will create a debugfs file entry named "hsic_sysmon_test" which
 	  can be read and written to send character data to the sysmon port of
 	  the modem over USB.
+
+config BT_MGMT
+	bool "Bluetooth Mgmt"
+	default n
+	help
+	  This is for bluetooth mgmt.
 
 endif

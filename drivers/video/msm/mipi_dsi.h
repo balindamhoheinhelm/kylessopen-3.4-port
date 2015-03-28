@@ -185,7 +185,11 @@ struct dsi_clk_desc {
 #define DSI_HDR_DATA1(data)	((data) & 0x0ff)
 #define DSI_HDR_WC(wc)		((wc) & 0x0ffff)
 
+#if defined(CONFIG_MACH_KYLE)
+#define DSI_BUF_SIZE	2048
+#else
 #define DSI_BUF_SIZE	1024
+#endif
 #define MIPI_DSI_MRPS	0x04  /* Maximum Return Packet Size */
 
 #define MIPI_DSI_LEN 8 /* 4 x 4 - 6 - 2, bytes dcs header+crc-align  */

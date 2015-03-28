@@ -48,7 +48,15 @@ endif
 obj-$(CONFIG_IP_DCCP)		+= dccp/
 obj-$(CONFIG_IP_SCTP)		+= sctp/
 obj-$(CONFIG_RDS)		+= rds/
+ifeq ($(CONFIG_MACH_AMAZING),y)
+obj-$(CONFIG_WIRELESS)		+= wireless_ath/
+else ifeq ($(CONFIG_MACH_AMAZING_CDMA),y)
+obj-$(CONFIG_WIRELESS)		+= wireless_ath/
+else ifeq ($(CONFIG_MACH_KYLE),y)
+obj-$(CONFIG_WIRELESS)		+= wireless_ath/
+else
 obj-$(CONFIG_WIRELESS)		+= wireless/
+endif
 obj-$(CONFIG_MAC80211)		+= mac80211/
 obj-$(CONFIG_TIPC)		+= tipc/
 obj-$(CONFIG_NETLABEL)		+= netlabel/

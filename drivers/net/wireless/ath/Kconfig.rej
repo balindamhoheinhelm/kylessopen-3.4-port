@@ -1,0 +1,9 @@
+--- drivers/net/wireless/ath/Kconfig	2013-04-19 11:37:14.000000000 +0200
++++ drivers/net/wireless/ath/Kconfig	2014-08-29 08:16:16.856240000 +0200
+@@ -25,5 +25,6 @@
+ source "drivers/net/wireless/ath/ath5k/Kconfig"
+ source "drivers/net/wireless/ath/ath9k/Kconfig"
+ source "drivers/net/wireless/ath/carl9170/Kconfig"
++source "drivers/net/wireless/ath/ath6kl/Kconfig"
+ 
+ endif

@@ -267,6 +267,9 @@ static DEFINE_RAW_SPINLOCK(die_lock);
 /*
  * This function is protected against re-entrancy.
  */
+#ifdef CONFIG_SEC_DEBUG
+#include "../mach-msm/smd_private.h"
+#endif
 void die(const char *str, struct pt_regs *regs, int err)
 {
 	struct thread_info *thread = current_thread_info();
@@ -274,6 +277,26 @@ void die(const char *str, struct pt_regs *regs, int err)
 	enum bug_trap_type bug_type = BUG_TRAP_TYPE_NONE;
 
 	oops_enter();
+#ifdef CONFIG_SEC_DEBUG
+	{
+		unsigned size;
+		samsung_vendor1_id *vendor1_id = (samsung_vendor1_id *)\
+			smem_get_entry(SMEM_ID_VENDOR1, &size);
+
+		/*error message */
+		memcpy(&(vendor1_id->apps_dump.apps_string),\
+			(void *)str, strlen(str));
+		vendor1_id->apps_dump.apps_string[strlen(str) + 1] = '\0';
+
+		/* current process*/
+		memcpy(&(vendor1_id->apps_dump.apps_process),\
+			(void *)thread->task->comm, strlen(thread->task->comm));
+		vendor1_id->apps_dump.apps_process[strlen(thread->task->comm) + 1] = '\0';
+		vendor1_id->apps_dump.apps_pid = task_pid_nr(thread->task);
+		vendor1_id->apps_dump.apps  = 0xf0;
+	}
+#endif /* CONFIG_SEC_DEBUG */
+
 
 	raw_spin_lock_irq(&die_lock);
 	console_verbose();

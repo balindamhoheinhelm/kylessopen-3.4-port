@@ -22,6 +22,8 @@
 #include <linux/workqueue.h>
 
 #include "modem_notifier.h"
+#include <linux/sec_debug.h>
+#include <asm/cacheflush.h>
 
 #define DEBUG
 

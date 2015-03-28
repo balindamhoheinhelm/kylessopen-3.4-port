@@ -1,0 +1,12 @@
+--- net/core/skbuff.c	2013-04-19 11:37:14.000000000 +0200
++++ net/core/skbuff.c	2014-08-29 08:16:36.572241000 +0200
+@@ -326,7 +326,8 @@
+ 		if (skb_shinfo(skb)->nr_frags) {
+ 			int i;
+ 			for (i = 0; i < skb_shinfo(skb)->nr_frags; i++)
+-				put_page(skb_shinfo(skb)->frags[i].page);
++			    if (skb_shinfo(skb)->frags[i].page)
++			        put_page(skb_shinfo(skb)->frags[i].page);
+ 		}
+ 
+ 		if (skb_has_frag_list(skb))

@@ -318,6 +318,32 @@ static inline void set_driver_amplitude(struct msm_otg *dev)
 	ulpi_write(dev, res, ULPI_CONFIG_REG2);
 }
 
+#ifdef CONFIG_USB_RECEIVER_SENSITIVITY
+/* for receiver sensitivity */
+#define ULPI_SQUELCH_LEVEL_MASK	(3 << 6)
+#define ULPI_CONFIG_REG4	0X33
+
+enum squelch_level {
+	SQUELCH_LEVEL_1,
+	SQUELCH_LEVEL_2 = (1 << 6),
+	SQUELCH_LEVEL_3 = (2 << 6),
+	SQUELCH_LEVEL_4 = (3 << 6),
+};
+
+static inline void set_squelch_level(struct msm_otg *dev)
+{
+	unsigned res = 0;
+
+	if (!dev->pdata)
+		return;
+
+	res = ulpi_read(dev, ULPI_CONFIG_REG4);
+	res &= ~ULPI_SQUELCH_LEVEL_MASK;
+	res |= SQUELCH_LEVEL_1;
+	ulpi_write(dev, res, ULPI_CONFIG_REG4);
+}
+#endif
+
 static const char *state_string(enum usb_otg_state state)
 {
 	switch (state) {
@@ -1591,7 +1617,9 @@ reset_link:
 	set_cdr_auto_reset(dev);
 	set_driver_amplitude(dev);
 	set_se1_gating(dev);
-
+	#if defined(CONFIG_MACH_AMAZING_CDMA) || defined(CONFIG_MACH_KYLE_I)
+	set_squelch_level(dev);
+	#endif
 	writel(0x0, USB_AHB_BURST);
 	writel(0x00, USB_AHB_MODE);
 	if (dev->pdata->bam_disable) {
@@ -2550,7 +2578,7 @@ static int otg_debugfs_init(struct msm_otg *dev)
 	if (!otg_debug_root)
 		return -ENOENT;
 
-	otg_debug_mode = debugfs_create_file("mode", 0222,
+	otg_debug_mode = debugfs_create_file("mode", 0444,
 						otg_debug_root, dev,
 						&otgfs_fops);
 	if (!otg_debug_mode)

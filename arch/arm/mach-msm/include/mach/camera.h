@@ -27,9 +27,9 @@
 #include <linux/ion.h>
 #include <mach/iommu_domains.h>
 
-#define CONFIG_MSM_CAMERA_DEBUG
+/*#define CONFIG_MSM_CAMERA_DEBUG*/
 #ifdef CONFIG_MSM_CAMERA_DEBUG
-#define CDBG(fmt, args...) pr_debug(fmt, ##args)
+#define CDBG(fmt, args...) printk(KERN_ERR "msm_camera: " fmt, ##args)
 #else
 #define CDBG(fmt, args...) do { } while (0)
 #endif
@@ -271,15 +271,32 @@ struct msm_camvpe_fn {
 	int *dis;
 };
 
+#ifdef CONFIG_MACH_KYLE_I
 struct msm_sensor_ctrl {
+
+	int (*s_power) (int enable);	//eunice09.kim change camera power sequence
 	int (*s_init)(const struct msm_camera_sensor_info *);
 	int (*s_release)(void);
 	int (*s_config)(void __user *);
+        int (*s_ext_config)(void __user *); // add for dual camera interface
 	enum msm_camera_type s_camera_type;
 	uint32_t s_mount_angle;
 	enum msm_st_frame_packing s_video_packing;
 	enum msm_st_frame_packing s_snap_packing;
 };
+#else
+struct msm_sensor_ctrl {
+	int (*s_init)(const struct msm_camera_sensor_info *);
+	int (*s_release)(void);
+	int (*s_config)(void __user *);
+        int (*s_ext_config)(void __user *); // add for dual camera interface
+	enum msm_camera_type s_camera_type;
+	uint32_t s_mount_angle;
+	enum msm_st_frame_packing s_video_packing;
+	enum msm_st_frame_packing s_snap_packing;
+};
+#endif
+
 
 struct msm_strobe_flash_ctrl {
 	int (*strobe_flash_init)

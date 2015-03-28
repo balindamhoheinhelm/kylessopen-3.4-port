@@ -1,0 +1,13 @@
+--- drivers/Makefile	2013-04-19 11:37:14.000000000 +0200
++++ drivers/Makefile	2014-08-29 08:16:12.980240000 +0200
+@@ -123,5 +123,10 @@
+ obj-y				+= ieee802154/
+ #common clk code
+ obj-y				+= clk/
++obj-y                           +=sensors/ 
+ 
+ obj-$(CONFIG_HWSPINLOCK)	+= hwspinlock/
++obj-$(CONFIG_DPRAM)             += dpram/
++ifeq (1, $(shell if [ -d ../../../../../../kernel/drivers/exfat ] ; then echo 1 ; fi))
++obj-y                           += exfat/
++endif

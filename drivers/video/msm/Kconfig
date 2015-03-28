@@ -10,6 +10,7 @@ config FB_MSM
 	select FB_CFB_FILLRECT
 	select FB_CFB_COPYAREA
 	select FB_CFB_IMAGEBLIT
+	select FB_LCD
 	---help---
 	  Support for MSM Framebuffer.
 
@@ -139,6 +140,12 @@ config FB_MSM_TVOUT
 	bool
 	default n
 
+config DISABLE_HDMI_FB_CLEAR
+	bool
+	default n
+	---help---
+	  Say Y here to disable clearing framebuffer for HDMI in early_suspend sequence
+
 config FB_MSM_MDDI_TOSHIBA_COMMON
 	bool
 	select FB_MSM_MDDI
@@ -211,6 +218,19 @@ config FB_MSM_MIPI_DSI_NT35516
 	bool
 	select FB_MSM_MIPI_DSI
 
+config FB_MSM_MIPI_DSI_NT35510
+	bool
+	select FB_MSM_MIPI_DSI
+
+config FB_MSM_MIPI_DSI_ORISE
+        bool
+        select FB_MSM_MIPI_DSI
+        default n
+
+config FB_MSM_MIPI_DSI_NT35516
+	bool
+	select FB_MSM_MIPI_DSI
+
 config FB_MSM_MIPI_DSI_TC358764_DSI2LVDS
 	bool
 	select FB_MSM_MIPI_DSI
@@ -263,6 +283,22 @@ config FB_MSM_LCDC_TOSHIBA_FWVGA_PT
 	select FB_MSM_LCDC_PANEL
 	default n
 
+config FB_MSM_LCDC_S6D16A0X_HVGA
+	bool
+	select FB_MSM_LCDC_PANEL
+	default n
+config FB_MSM_LCDC_TREBON_HVGA
+	bool
+	select FB_MSM_LCDC_PANEL
+	default n
+config FB_MSM_LCDC_AMAZING_HVGA
+	bool
+	select FB_MSM_LCDC_PANEL
+	default n
+config FB_MSM_LCDC_JENA_HVGA
+	bool
+	select FB_MSM_LCDC_PANEL
+	default n
 config FB_MSM_LCDC_SHARP_WVGA_PT
 	bool
 	select FB_MSM_LCDC_PANEL
@@ -378,6 +414,32 @@ config FB_MSM_MIPI_NT35516_CMD_QHD_PT
         default n
 
 
+config FB_MSM_MIPI_NT35510_VIDEO_HYDIS_WVGA_PT
+	bool
+	select FB_MSM_MIPI_DSI_NT35510
+	default n
+
+config FB_MSM_MIPI_NT35510_CMD_HYDIS_WVGA_PT
+	bool
+	select FB_MSM_MIPI_DSI_NT35510
+	default n
+
+config FB_MSM_MIPI_NT35510_CMD_BOE_WVGA_PT
+	bool
+	select FB_MSM_MIPI_DSI_NT35510
+	default n
+
+config FB_MSM_MIPI_NT35516_VIDEO_QHD_PT
+        bool
+        select FB_MSM_MIPI_DSI_NT35516
+        default n
+
+config FB_MSM_MIPI_NT35516_CMD_QHD_PT
+        bool
+        select FB_MSM_MIPI_DSI_NT35516
+        default n
+
+
 config FB_MSM_MIPI_CHIMEI_WXGA
 	bool "LVDS Chimei WXGA Panel using Toshiba MIPI DSI-to-LVDS bridge."
 	select FB_MSM_MIPI_DSI_TC358764_DSI2LVDS
@@ -423,9 +485,16 @@ config FB_MSM_WRITEBACK_MSM_PANEL
         bool "MDP overlay write back panel enable"
 	---help---
 	  Support for MDP4 OVERLAY write back mode
-choice
-	prompt "LCD Panel"
-	default FB_MSM_MDDI_AUTO_DETECT
+
+config FB_LCD
+	depends on FB_MSM
+	tristate "LCD Panel drivers"
+	default y
+	---help---
+	  Enable primary LCD panel support.
+       
+
+if FB_LCD
 
 config FB_MSM_LCDC_PRISM_WVGA_PANEL
 	depends on FB_MSM_LCDC_HW
@@ -470,6 +539,28 @@ config FB_MSM_LCDC_TOSHIBA_FWVGA_PT_PANEL
 	  Support for LCDC Toshiba FWVGA PT (480x864) panel. This
 	  configuration has to be selected to support the Toshiba
 	  FWVGA (480x864) portrait panel.
+config FB_MSM_LCDC_S6D16A0X_HVGA_PANEL
+	depends on FB_MSM_LCDC_HW
+	bool "FB MSM LCDC S6D16A0X HVGA Panel"
+	select FB_MSM_LCDC_S6D16A0X_HVGA
+	---help---
+	  Support for LCDC S6D16A0X HVGA (320x480) panel
+	  .
+	  .
+config FB_MSM_LCDC_TREBON_HVGA_PANEL
+	depends on FB_MSM_LCDC_HW
+	bool "FB MSM LCDC TREBON HVGA Panel"
+	select FB_MSM_LCDC_TREBON_HVGA
+	---help---
+	  Support for LCDC TREBON HVGA (320x480) panel
+	  .
+	  .
+config FB_MSM_LCDC_AMAZING_HVGA_PANEL
+	depends on FB_MSM_LCDC_HW
+	bool "FB MSM LCDC AMAZING HVGA Panel"
+	select FB_MSM_LCDC_AMAZING_HVGA
+	---help---
+	  Support for LCDC AMAZING HVGA (320x480) panel
 
 config FB_MSM_LCDC_SHARP_WVGA_PT_PANEL
 	depends on FB_MSM_LCDC_HW
@@ -523,6 +614,8 @@ config FB_MSM_TRY_MDDI_CATCH_LCDC_PRISM
 	select FB_MSM_LCDC_WXGA
 	select FB_MSM_LCDC_TOSHIBA_WVGA_PT
 	select FB_MSM_LCDC_TOSHIBA_FWVGA_PT
+	select FB_MSM_LCDC_TREBON_HVGA
+	select FB_MSM_LCDC_AMAZING_HVGA
 	select FB_MSM_LCDC_SHARP_WVGA_PT
 	select FB_MSM_LCDC_ST15_WXGA
 	---help---
@@ -539,6 +632,9 @@ config FB_MSM_MIPI_PANEL_DETECT
 	select FB_MSM_MIPI_TRULY_VIDEO_WVGA_PT
 	select FB_MSM_MIPI_NOVATEK_VIDEO_QHD_PT
 	select FB_MSM_MIPI_NOVATEK_CMD_QHD_PT
+	select FB_MSM_MIPI_NT35510_VIDEO_HYDIS_WVGA_PT
+	select FB_MSM_MIPI_NT35510_CMD_HYDIS_WVGA_PT
+	select FB_MSM_MIPI_NT35510_CMD_BOE_WVGA_PT
 	select FB_MSM_MIPI_NT35510_VIDEO_WVGA_PT
 	select FB_MSM_MIPI_NT35510_CMD_WVGA_PT
 	select FB_MSM_MIPI_ORISE_VIDEO_720P_PT
@@ -585,6 +681,11 @@ config FB_MSM_LCDC_MIPI_PANEL_AUTO_DETECT
 	select FB_MSM_MIPI_NT35510_CMD_WVGA_PT
 	select FB_MSM_MIPI_NT35516_VIDEO_QHD_PT
 	select FM_MSM_MIPI_NT35516_CMD_QHD_PT
+	select FB_MSM_MIPI_NT35510_VIDEO_HYDIS_WVGA_PT
+	select FB_MSM_MIPI_NT35510_CMD_HYDIS_WVGA_PT
+	select FB_MSM_MIPI_NT35510_CMD_BOE_WVGA_PT
+	select FB_MSM_MIPI_NT35516_VIDEO_QHD_PT
+	select FM_MSM_MIPI_NT35516_CMD_QHD_PT
 	select FB_MSM_MIPI_SIMULATOR_VIDEO
 	---help---
 	  Support for LCDC + MIPI panel auto detect
@@ -601,6 +702,9 @@ config FB_MSM_LVDS_MIPI_PANEL_DETECT
 	select FB_MSM_MIPI_TRULY_VIDEO_WVGA_PT
 	select FB_MSM_MIPI_NOVATEK_VIDEO_QHD_PT
 	select FB_MSM_MIPI_NOVATEK_CMD_QHD_PT
+	select FB_MSM_MIPI_NT35510_VIDEO_HYDIS_WVGA_PT
+	select FB_MSM_MIPI_NT35510_CMD_HYDIS_WVGA_PT
+	select FB_MSM_MIPI_NT35510_CMD_BOE_WVGA_PT
 	select FB_MSM_MIPI_NT35510_VIDEO_WVGA_PT
 	select FB_MSM_MIPI_NT35510_CMD_WVGA_PT
 	select FB_MSM_MIPI_ORISE_VIDEO_720P_PT
@@ -705,6 +809,26 @@ config FB_MSM_MIPI_NT35516_CMD_QHD_PT_PANEL
         bool "MIPI NT35516 Command qHD PT Panel"
         select FB_MSM_MIPI_NT35516_CMD_QHD_PT
 
+config FB_MSM_MIPI_NT35510_VIDEO_HYDIS_WVGA_PT_PANEL
+	bool "MIPI NT35510 Video HYDIS WVGA PT Panel"
+	select FB_MSM_MIPI_NT35510_VIDEO_HYDIS_WVGA_PT
+
+config FB_MSM_MIPI_NT35510_CMD_HYDIS_WVGA_PT_PANEL
+	bool "MIPI NT35510 Command HYDIS WVGA PT Panel"
+	select FB_MSM_MIPI_NT35510_CMD_HYDIS_WVGA_PT
+
+config FB_MSM_MIPI_NT35510_CMD_BOE_WVGA_PT_PANEL
+	bool "MIPI NT35510 Command BOE WVGA PT Panel"
+	select FB_MSM_MIPI_NT35510_CMD_BOE_WVGA_PT
+
+config FB_MSM_MIPI_NT35516_VIDEO_QHD_PT_PANEL
+        bool "MIPI NT35516 Video qHD PT Panel"
+        select FB_MSM_MIPI_NT35516_VIDEO_QHD_PT
+
+config FB_MSM_MIPI_NT35516_CMD_QHD_PT_PANEL
+        bool "MIPI NT35516 Command qHD PT Panel"
+        select FB_MSM_MIPI_NT35516_CMD_QHD_PT
+
 config FB_MSM_MIPI_SIMULATOR_VIDEO_PANEL
 	bool "MIPI Simulator Video Panel"
 	select FB_MSM_MIPI_SIMULATOR_VIDEO
@@ -725,7 +849,7 @@ config FB_MSM_PANEL_NONE
 	bool "NONE"
 	---help---
 	  This will disable LCD panel
-endchoice
+endif
 
 choice
 	prompt "Secondary LCD Panel"
@@ -919,7 +1043,7 @@ endchoice
 
 choice
 	prompt "Default framebuffer color depth"
-	depends on FB_MSM_MDP40 || FB_MSM_MDP31 || FB_MSM_MDP303
+	depends on FB_MSM_MDP40 || FB_MSM_MDP31 || FB_MSM_MDP303 || FB_MSM_MDP30
 	default FB_MSM_DEFAULT_DEPTH_RGBA8888
 
 config FB_MSM_DEFAULT_DEPTH_RGB565
@@ -951,3 +1075,4 @@ if FB_MSM_MDSS
 	source "drivers/video/msm/mdss/Kconfig"
 endif
 endif
+

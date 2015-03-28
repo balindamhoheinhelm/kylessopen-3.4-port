@@ -1,0 +1,51 @@
+--- drivers/usb/gadget/f_rmnet_smd_sdio.c	2013-04-19 11:37:14.000000000 +0200
++++ drivers/usb/gadget/f_rmnet_smd_sdio.c	2014-08-29 08:20:15.308248000 +0200
+@@ -1354,6 +1354,7 @@
+ 								function);
+ 	struct rmnet_mux_sdio_dev *sdio_dev = &dev->sdio_dev;
+ 	struct usb_composite_dev *cdev = dev->cdev;
++	int ret = 0;
+ 
+ 	/* allocate notification */
+ 	dev->notify_req = rmnet_mux_alloc_req(dev->epnotify,
+@@ -1365,18 +1366,37 @@
+ 	dev->notify_req->complete = rmnet_mux_notify_complete;
+ 	dev->notify_req->context = dev;
+ 	dev->notify_req->length = RMNET_MUX_SDIO_MAX_NFY_SZE;
+-	usb_ep_enable(dev->epnotify, ep_choose(cdev->gadget,
++	ret = usb_ep_enable(dev->epnotify, ep_choose(cdev->gadget,
+ 				&rmnet_mux_hs_notify_desc,
+ 				&rmnet_mux_fs_notify_desc));
++	if (ret) {
++		ERROR(cdev, "can't enable %s, result %d\n",
++					dev->epnotify->name, ret);
++		return ret;
++	}
+ 
+ 	dev->epin->driver_data = dev;
+-	usb_ep_enable(dev->epin, ep_choose(cdev->gadget,
++	ret = usb_ep_enable(dev->epin, ep_choose(cdev->gadget,
+ 				&rmnet_mux_hs_in_desc,
+ 				&rmnet_mux_fs_in_desc));
++	if (ret) {
++		ERROR(cdev, "can't enable %s, result %d\n",
++					dev->epin->name, ret);
++		usb_ep_disable(dev->epnotify);
++		return ret;
++	}
++
+ 	dev->epout->driver_data = dev;
+-	usb_ep_enable(dev->epout, ep_choose(cdev->gadget,
++	ret = usb_ep_enable(dev->epout, ep_choose(cdev->gadget,
+ 				&rmnet_mux_hs_out_desc,
+ 				&rmnet_mux_fs_out_desc));
++	if (ret) {
++		ERROR(cdev, "can't enable %s, result %d\n",
++					dev->epout->name, ret);
++		usb_ep_disable(dev->epnotify);
++		usb_ep_disable(dev->epin);
++		return ret;
++	}
+ 
+ 	dev->dpkts_tolaptop = 0;
+ 	dev->cpkts_tolaptop = 0;

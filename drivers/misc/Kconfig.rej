@@ -1,0 +1,9 @@
+--- drivers/misc/Kconfig	2013-04-19 11:37:14.000000000 +0200
++++ drivers/misc/Kconfig	2014-08-29 08:16:14.948240000 +0200
+@@ -679,5 +709,6 @@
+ source "drivers/misc/ti-st/Kconfig"
+ source "drivers/misc/lis3lv02d/Kconfig"
+ source "drivers/misc/carma/Kconfig"
++source "drivers/misc/modem_if/Kconfig"
+ 
+ endif # MISC_DEVICES

@@ -1,0 +1,11 @@
+--- include/linux/msm_mdp.h	2013-04-19 11:37:14.000000000 +0200
++++ include/linux/msm_mdp.h	2014-08-29 08:20:15.312248000 +0200
+@@ -99,7 +99,7 @@
+ 	MDP_IMGTYPE_LIMIT,
+ 	MDP_BGR_565 = MDP_IMGTYPE2_START,      /* BGR 565 planer */
+ 	MDP_FB_FORMAT,    /* framebuffer format */
+-	MDP_IMGTYPE_LIMIT2 /* Non valid image type after this enum */
++	MDP_IMGTYPE_LIMIT2, /* Non valid image type after this enum */
+ };
+ 
+ enum {

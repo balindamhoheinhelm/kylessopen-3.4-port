@@ -124,11 +124,15 @@ enum power_supply_property {
 	POWER_SUPPLY_PROP_TIME_TO_FULL_NOW,
 	POWER_SUPPLY_PROP_TIME_TO_FULL_AVG,
 	POWER_SUPPLY_PROP_TYPE, /* use power_supply.type instead */
+	POWER_SUPPLY_PROP_FUELGAUGE_STATE, /*for SAMSUNG fuelgauging */
 	POWER_SUPPLY_PROP_SCOPE,
 	/* Properties of type `const char *' */
 	POWER_SUPPLY_PROP_MODEL_NAME,
 	POWER_SUPPLY_PROP_MANUFACTURER,
 	POWER_SUPPLY_PROP_SERIAL_NUMBER,
+        /*Fuelgauge properties*/
+        POWER_SUPPLY_PROP_FUELGAUGE_RCONFIG,
+        POWER_SUPPLY_PROP_FUELGAUGE_RESET,
 };
 
 enum power_supply_type {

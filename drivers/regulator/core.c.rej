@@ -1,0 +1,10 @@
+--- drivers/regulator/core.c	2013-04-19 11:37:14.000000000 +0200
++++ drivers/regulator/core.c	2014-08-29 08:16:32.524241000 +0200
+@@ -30,6 +30,7 @@
+ #include <linux/regulator/consumer.h>
+ #include <linux/regulator/driver.h>
+ #include <linux/regulator/machine.h>
++#include <linux/proc_fs.h>
+ 
+ #define CREATE_TRACE_POINTS
+ #include <trace/events/regulator.h>

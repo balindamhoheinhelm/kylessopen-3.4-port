@@ -1,0 +1,19 @@
+--- drivers/video/msm/mdp_dma_lcdc.c	2013-04-19 11:37:14.000000000 +0200
++++ drivers/video/msm/mdp_dma_lcdc.c	2014-08-29 08:20:15.308248000 +0200
+@@ -322,7 +341,6 @@
+ 		timer_base = DTV_BASE;
+ 	}
+ #endif
+-
+ 	/* MDP cmd block enable */
+ 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_ON, FALSE);
+ 	MDP_OUTP(MDP_BASE + timer_base, 0);
+@@ -330,7 +348,7 @@
+ 	mdp_pipe_ctrl(MDP_CMD_BLOCK, MDP_BLOCK_POWER_OFF, FALSE);
+ 	mdp_pipe_ctrl(block, MDP_BLOCK_POWER_OFF, FALSE);
+ 
+-	ret = panel_next_off(pdev);
++		ret = panel_next_off(pdev);
+ 
+ 	/* delay to make sure the last frame finishes */
+ 	msleep(16);

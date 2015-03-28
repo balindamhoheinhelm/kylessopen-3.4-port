@@ -1,0 +1,11 @@
+--- arch/arm/mm/mmu.c	2013-04-19 11:37:14.000000000 +0200
++++ arch/arm/mm/mmu.c	2014-08-29 08:16:10.428240000 +0200
+@@ -1219,7 +1219,7 @@
+ 	empty_zero_page = virt_to_page(zero_page);
+ 	__flush_dcache_page(NULL, empty_zero_page);
+ 
+-#if defined(CONFIG_ARCH_MSM7X27)
++#if defined(CONFIG_ARCH_MSM7X27) || defined(CONFIG_ARCH_MSM7X27A)
+ 	/*
+ 	 * ensure that the strongly ordered page is mapped before the
+ 	 * first call to write_to_strongly_ordered_memory. This page

@@ -1,0 +1,10 @@
+--- arch/arm/mach-msm/smd_private.h	2013-04-19 11:37:14.000000000 +0200
++++ arch/arm/mach-msm/smd_private.h	2014-08-29 08:20:15.300248000 +0200
+@@ -19,6 +19,7 @@
+ #include <linux/types.h>
+ #include <linux/spinlock.h>
+ #include <mach/msm_smsm.h>
++#include "smem_vendor_type.h"
+ 
+ #define PC_APPS  0
+ #define PC_MODEM 1

@@ -1,0 +1,16 @@
+--- arch/arm/mach-msm/board-msm7627a.h	2013-04-19 11:37:14.000000000 +0200
++++ arch/arm/mach-msm/board-msm7627a.h	2014-08-29 08:20:15.292248000 +0200
+@@ -103,4 +104,13 @@
+ 
+ void __init msm7627a_camera_init(void);
+ u32 msm7627a_power_collapse_latency(enum msm_pm_sleep_mode);
++#ifdef WLAN_33V_CONTROL_FOR_BT_ANTENNA
++#ifdef CONFIG_MACH_AMAZING_CDMA
++extern int wlan_enable_ldo_33v(int on);
++#else
++int wlan_setup_ldo_33v(int input_flag, int on);
+ #endif
++extern void bluetooth_setup_ldo_33v(int on);
++#endif
++#endif
++
